@@ -4,6 +4,8 @@ import com.main.OnShowStudentCard;
 import com.visitor.Visitor;
 import org.springframework.stereotype.Component;
 
+import java.util.Objects;
+
 @Component
 public class Host implements OnShowStudentCard, OnSign {
 
@@ -36,6 +38,10 @@ public class Host implements OnShowStudentCard, OnSign {
         this.fullName = host.fullName;
         this.contact = host.contact;
         this.roomNumber = host.roomNumber;
+    }
+
+    public Host() {
+
     }
 
     public long getHostNumber() {
@@ -84,7 +90,18 @@ public class Host implements OnShowStudentCard, OnSign {
                 '}';
     }
 
+    @Override
+    public boolean equals(Object other_host) {
+        if (this == other_host) return true;
+        if (!(other_host instanceof Host host)) return false;
+        return studentNumber == host.studentNumber &&   getFullName().equalsIgnoreCase(host.getFullName())
+                && getRoomNumber().equalsIgnoreCase( host.getRoomNumber());
+    }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(studentNumber, getFullName(), getContact(), getRoomNumber());
+    }
 
     /**
      * @return  details of the student card  of host

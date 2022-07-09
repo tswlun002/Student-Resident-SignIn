@@ -34,6 +34,8 @@ public class Visitor{
         this.contact = visitor.contact;
     }
 
+    public  Visitor(){}
+
     @Override
     public String toString() {
         return "Visitor{" +

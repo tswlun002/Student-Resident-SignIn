@@ -8,10 +8,33 @@ public class Relative extends  Visitor implements OnShowIdentityCard{
     private long idNumber;
     private  Address address;
 
+    private  String fullName;
+    private  String contact;
 
+    @Override
+    public String getFullName() {
+        return fullName;
+    }
 
-    public Relative(String fullName, String contact ,long idNumber, Address address) {
+    @Override
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+
+    @Override
+    public String getContact() {
+        return contact;
+    }
+
+    @Override
+    public void setContact(String contact) {
+        this.contact = contact;
+    }
+
+    public Relative(String fullName, String contact , long idNumber, Address address) {
         super(fullName, contact);
+        setFullName(fullName);
+        setContact(contact);
         this.idNumber = idNumber;
         this.address = address;
     }
@@ -20,6 +43,10 @@ public class Relative extends  Visitor implements OnShowIdentityCard{
         super(relative);
         this.idNumber = relative.idNumber;
         this.address = relative.address;
+    }
+
+    public Relative() {
+        super();
     }
 
     public long getIdNumber() {
@@ -43,8 +70,8 @@ public class Relative extends  Visitor implements OnShowIdentityCard{
     public String toString() {
         return "Relative{" +
                 "idNumber='" + idNumber + '\'' +
-                ", fullName='" + super.getFullName() + '\'' +
-                ", contact='" + super.getContact() + '\'' +
+                ", fullName='" + getFullName() + '\'' +
+                ", contact='" + getContact() + '\'' +
                 ", address='" + address + '\'' +
                 '}';
     }
