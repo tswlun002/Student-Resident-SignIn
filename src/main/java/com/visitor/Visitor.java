@@ -1,8 +1,5 @@
 package com.visitor;
 
-import com.main.MemberProof;
-import org.springframework.stereotype.Component;
-
 
 public class Visitor{
     private  String fullName;

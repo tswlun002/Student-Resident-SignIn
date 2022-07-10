@@ -1,12 +1,11 @@
 package com.host;
 
-import com.main.OnShowStudentCard;
+import com.application.OnShowStudentCard;
 import com.visitor.Visitor;
-import org.springframework.stereotype.Component;
-
+import org.springframework.stereotype.Service;
 import java.util.Objects;
 
-@Component
+@Service
 public class Host implements OnShowStudentCard, OnSign {
 
     private long studentNumber;

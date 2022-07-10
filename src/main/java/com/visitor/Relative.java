@@ -1,8 +1,9 @@
 package com.visitor;
 
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
-@Component
+@Service
+
 public class Relative extends  Visitor implements OnShowIdentityCard{
 
     private long idNumber;

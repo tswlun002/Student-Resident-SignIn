@@ -1,7 +1,9 @@
 package com.server;
 
-import java.util.ArrayList;
+import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+@Service
 public class Resident {
 
     private String[] blocks = {"A", "B","C","D","F"};

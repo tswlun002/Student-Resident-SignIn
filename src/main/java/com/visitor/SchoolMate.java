@@ -1,11 +1,13 @@
 package com.visitor;
 
-import com.main.OnShowStudentCard;
-import org.springframework.stereotype.Component;
+import com.application.OnShowStudentCard;
+import org.springframework.stereotype.Service;
+
 
 import java.util.Objects;
 
-@Component
+@Service
+
 public class SchoolMate extends Visitor implements  OnShowIdentityCard, OnShowStudentCard {
     private long studentNumber;
     private  String resident;

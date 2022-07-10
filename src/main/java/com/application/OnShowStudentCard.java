@@ -1,4 +1,4 @@
-package com.main;
+package com.application;
 
 /**
  * Interface to show student card

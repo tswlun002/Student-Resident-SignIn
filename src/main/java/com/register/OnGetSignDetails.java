@@ -1,7 +1,8 @@
 package com.register;
 import org.springframework.stereotype.Component;
+import java.util.*;;
 
 @Component
 public interface OnGetSignDetails {
-    public void getSignDetail(String details);
+    public void getSignDetail(List<SignInItems> signInItems);
 }

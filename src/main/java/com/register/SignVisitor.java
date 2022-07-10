@@ -1,18 +1,16 @@
 package com.register;
-
 import com.host.Host;
-import com.server.OnHostNotSignedOut;
 import com.visitor.Address;
 import com.visitor.Relative;
 import com.visitor.SchoolMate;
 import com.visitor.Visitor;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import java.sql.Date;
 import java.sql.Time;
 import java.time.LocalDate;
 import java.util.Scanner;
 
-@Component
+@Service
 public class SignVisitor {
     private  long hostId;
     private  long visitorId;
@@ -129,7 +127,6 @@ public class SignVisitor {
         if(ID.length() == 13){
             int century = (Integer.parseInt(ID.substring(0,1))==9)?19:20;
             long years = LocalDate.now().getYear()-(Integer.parseInt(century + ID.substring(0,2)));
-            System.out.println(years);
             //check year
             if(years<=90 && years>=0) {
                 int gender = Integer.parseInt(ID.substring(6,10));

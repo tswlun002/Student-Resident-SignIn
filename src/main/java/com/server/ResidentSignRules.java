@@ -1,9 +1,9 @@
 package com.server;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+
 import java.time.LocalTime;
 
-
-@Component
+@Service
 public class ResidentSignRules {
     private LocalTime signOutTime = LocalTime.MAX;
     private LocalTime sigInTime = LocalTime.of(6,0,0,0);

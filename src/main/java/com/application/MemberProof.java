@@ -1,4 +1,4 @@
-package com.main;
+package com.application;
 
 public interface MemberProof {
     /**

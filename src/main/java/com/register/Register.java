@@ -5,30 +5,31 @@ import com.server.Server;
 import com.visitor.Relative;
 import com.visitor.SchoolMate;
 import com.visitor.Visitor;
-import org.springframework.stereotype.Component;
-
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@Component
+@Service
 public class Register implements OnHostNotSignedOut {
 
     private ArrayList<SignInItems> signInItems = new ArrayList<>();
-    private  Server server;
 
 
-    public  Register(){}
-    public Register(Server server){
-        this.server =server;
-    }
+
+    @Autowired
+    private ApplicationContext context;
+    public Register(){}
 
     public Register(Register register){
         this.signInItems=register.signInItems;
-        this.server=register.server;
     }
     public  boolean  setSignInItem(Host host, Visitor visitor, SignInItems newItem) throws Exception {
-
-        boolean authenticated = (visitor instanceof Relative) ? server.authenticateAndAuthorizationRelative(host, (Relative) visitor) :
+         Server server = context.getBean(Server.class);
+         server.getSignDetail(signInItems);
+        boolean authenticated = (visitor instanceof Relative) ?
+                server.authenticateAndAuthorizationRelative(host, (Relative) visitor) :
                 server.authenticateAndAuthorizationSchoolmate(host, (SchoolMate) visitor);
         if(authenticated) {
             boolean is_newItemInRegister=false;

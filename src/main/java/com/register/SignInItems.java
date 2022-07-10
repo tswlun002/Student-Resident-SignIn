@@ -2,7 +2,7 @@ package com.register;
 import org.springframework.stereotype.Component;
 import java.sql.Time;
 import java.util.Date;
-public class SignInItems implements OnGetSignDetails{
+public class SignInItems{
 
     private Date date;
     private Time signInTime;
@@ -112,10 +112,5 @@ public class SignInItems implements OnGetSignDetails{
                 '}';
     }
 
-    /**
-     * @param details
-     */
-    @Override
-    public void getSignDetail(String details) {
-    }
+
 }

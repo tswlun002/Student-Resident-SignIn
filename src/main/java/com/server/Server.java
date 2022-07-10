@@ -1,37 +1,43 @@
 package com.server;
 import com.host.Host;
-import com.register.Register;
+import com.register.OnGetSignDetails;
 import com.register.SignInItems;
 import com.server.Dao.ResidentDB;
 import com.server.Dao.UCTDB;
 import com.visitor.Relative;
 import com.visitor.SchoolMate;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
+@Service
+public class Server implements OnDayEnd, OnGetSignDetails {
+    public List<SignInItems> getSignInItems() {
+        return signInItems;
+    }
 
-@Component
-public class Server implements OnDayEnd  {
-    private ArrayList<SignInItems> signInItems;
-
+    private List<SignInItems> signInItems;
     private  Resident resident;
+
+    private  ResidentDB residentDB;
+
+    private  UCTDB uctdb;
     private  ResidentSignRules residentSignRules;
 
-
-    @Autowired
-    private ApplicationContext context;
 
 
     /**
      *Default construct
      */
-    public Server(){
+    public Server(Resident resident, ResidentSignRules residentSignRules, ResidentDB residentDB, UCTDB uctdb){
+        this.resident =resident;
+        this.residentSignRules=residentSignRules;
+        this.residentDB=residentDB;
+        this.uctdb =uctdb;
     }
 
     /**
@@ -41,10 +47,8 @@ public class Server implements OnDayEnd  {
      * @return - true if  signing meet rules else false
      */
     public boolean authenticateAndAuthorizationSchoolmate(Host host, SchoolMate visitor) throws Exception {
-        this.residentSignRules = context.getBean(ResidentSignRules.class);
-        this.resident = context.getBean(Resident.class);
         return validateHost(host) && validateSchoolmate(visitor) &&
-                countNumberSignIn(host, new Date(System.currentTimeMillis())) &&
+                countNumberSignIn(host.getHostNumber(), new Date(System.currentTimeMillis())) &&
                 withInSigningTime(LocalTime.now());
     }
 
@@ -55,10 +59,8 @@ public class Server implements OnDayEnd  {
      * @return - true if  signing meet rules else false
      */
     public boolean authenticateAndAuthorizationRelative(Host host, Relative visitor) throws Exception {
-        this.residentSignRules = context.getBean(ResidentSignRules.class);
-        this.resident = context.getBean(Resident.class);
         return validateHost(host) && validateId(visitor.getIdNumber()) &&
-                countNumberSignIn(host, new Date(System.currentTimeMillis())) &&
+                countNumberSignIn(host.getHostNumber(), new Date(System.currentTimeMillis())) &&
                 withInSigningTime(LocalTime.now());
     }
 
@@ -75,31 +77,31 @@ public class Server implements OnDayEnd  {
         }
         else {
 
-            throw new Exception("You can not  sign visitor between "+ residentSignRules.getSignOutTime().toString() +
-                    " "+ residentSignRules.getSigInTime().toString());
+            throw new Exception("You can not  sign visitor between "+ residentSignRules.getSignOutTime().format(DateTimeFormatter.ofPattern(
+                    "hh:mm a")) +
+                    " - "+ residentSignRules.getSigInTime().format(DateTimeFormatter.ofPattern("hh:mm a")));
         }
     }
 
     /**
      *  Check if the host have not reached sign max
-     * @param host  - object of the host
      * @param date - date of the sign
      * @return - true if the host haven't reach max else false
      */
-    public   boolean countNumberSignIn(Host host, Date date) throws Exception {
-        signInItems = context.getBean(Register.class).getSignInItems();
+    public   boolean countNumberSignIn(long hostId, Date date) throws Exception {
+        //signInItems = context.getBean(Register.class).getSignInItems();
        int []count  ={ 0};
        if(signInItems != null) {
            signInItems.forEach(signInItems1 -> {
-               count[0] += (signInItems1.getHostId() == host.getHostNumber() &&
-                       signInItems1.getDate().toString().equalsIgnoreCase(date.toString())) ? 1 : 0;
+               count[0] += (signInItems1.getHostId() == hostId &&
+                       signInItems1.getDate().toString().equalsIgnoreCase(date.toString()) &&
+                       signInItems1.getStatus().equalsIgnoreCase("sign in")) ? 1 : 0;
            });
        }
        if( count[0]< residentSignRules.getNumberVisitors()){
            return  true;
        } else {
-
-           throw new Exception("Host " + host.getFullName() + " can't sign more than  "+count[0]+ " visitor.");
+           throw new Exception("Host  can't sign more than  3 visitor.");
        }
     }
 
@@ -109,11 +111,11 @@ public class Server implements OnDayEnd  {
      * @return - true if said host belong to res else false
      */
     public    boolean validateHost(Host host) throws Exception {
-        if( context.getBean(ResidentDB.class).getHostList().stream().anyMatch(host::equals)){
+        if( residentDB.getHostList().stream().anyMatch(host::equals)){
             return  true;
         }
         else {
-            throw new Exception("Visitor " + host.getFullName() + " is not found in Resident database");
+            throw new Exception("Host " + host.getFullName() + " is not found in Resident database");
         }
     }
 
@@ -123,7 +125,7 @@ public class Server implements OnDayEnd  {
      * @return - true if the student is register else false
      */
     public    boolean validateSchoolmate(SchoolMate student) throws Exception {
-        if(  context.getBean(UCTDB.class).getStudent().stream().anyMatch(student::equals))
+        if(  uctdb.getStudent().stream().anyMatch(student::equals))
             return  true;
         else {
             throw new Exception("Visitor " + student.getFullName() + " is not found in UCT database");
@@ -135,49 +137,40 @@ public class Server implements OnDayEnd  {
      * @param Id - RSA id number
      * @return - true if correct ID number else false
      */
-    public  boolean validateId(long Id) throws Exception {
+    public  boolean validateId(long Id) {
          boolean isValid  = false;
          String ID  = String.valueOf(Id);
-          if(ID.length() == 13){
-              int century = (Integer.parseInt(ID.substring(0,1))==9)?19:20;
-              long years = LocalDate.now().getYear()-(Integer.parseInt(century+ID.substring(0,2)));
-              /*/check year
-              if(years<=90 && years>=0) {
-                 int gender = Integer.parseInt(ID.substring(6,10));
-                 int citizenship = Integer.parseInt(ID.substring(10,11));
-                 // check valid citizenship or gender
-                 if(((gender<=4999 & gender>=0)||(gender<=8999&gender>=5000)) &&
-                         (citizenship ==0 || citizenship==1)){
+          if(ID.length() == 13) {
+              int century = (Integer.parseInt(ID.substring(0, 1)) == 9) ? 19 : 20;
+              long years = LocalDate.now().getYear() - (Integer.parseInt(century + ID.substring(0, 2)));
+              //check year
+              if (years <= 90 && years >= 0) {
+                  int gender = Integer.parseInt(ID.substring(6, 10));
+                  int citizenship = Integer.parseInt(ID.substring(10, 11));
+                  // check valid citizenship or gender
+                  if (((gender <= 4999 & gender >= 0) || (gender <= 8999 & gender >= 5000)) &&
+                          (citizenship == 0 || citizenship == 1)) {
                       // Apply Luhn algo  to check if ID validated by RSA home affairs
-                     long tempTotal;
-                     long checkSum = 0;
-                     int multiplier = 1;
-                     for(int i=1; i<13; ++i){
-                        tempTotal = Long.parseLong(ID.charAt(i)+"") *multiplier;
-                        if(tempTotal>9){
-                            tempTotal = Long.parseLong(String.valueOf(tempTotal).charAt(0)+"")+
-                                    Long.parseLong(String.valueOf(tempTotal).charAt(1)+"");
-                        }
-                        checkSum = checkSum+tempTotal;
-                        multiplier = (multiplier%2==0)?1:2;
-                        if(checkSum%10 ==0){
-                            isValid = true;
-                        }
+                      long tempTotal;
+                      long checkSum = 0;
+                      int multiplier = 1;
+                      for (int i = 1; i < 13; ++i) {
+                          tempTotal = Long.parseLong(ID.charAt(i) + "") * multiplier;
+                          if (tempTotal > 9) {
+                              tempTotal = Long.parseLong(String.valueOf(tempTotal).charAt(0) + "") +
+                                      Long.parseLong(String.valueOf(tempTotal).charAt(1) + "");
+                          }
+                          checkSum = checkSum + tempTotal;
+                          multiplier = (multiplier % 2 == 0) ? 1 : 2;
+                          if (checkSum % 10 == 0) {
+                              isValid = true;
+                          }
 
-                     }
-                     }*/
-                    isValid=true;
-
-
-
+                      }
+                  }
               }
-          if(  isValid){
-              return  true;
           }
-          else {
-
-              throw new Exception(Id +" Can not be verified. Please re-enter it");
-          }
+         return  isValid;
     }
 
     private ResidentSignRules getResidentSignRules() {
@@ -202,10 +195,17 @@ public class Server implements OnDayEnd  {
            });
 
         }
-        context.getBean(Register.class).showNotSignedOutVisitors(notSignedOut);
+       // context.getBean(Register.class).showNotSignedOutVisitors(notSignedOut);
 
     }
 
 
+    /**
+     * @param signInItems
+     */
+    @Override
+    public void getSignDetail(List<SignInItems> signInItems) {
+        this.signInItems = signInItems;
 
+    }
 }
