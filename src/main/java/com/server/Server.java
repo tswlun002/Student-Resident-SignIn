@@ -1,6 +1,6 @@
 package com.server;
 import com.host.Host;
-import com.register.OnGetSignDetails;
+import com.register.OnSignedItems;
 import com.register.SignInItems;
 import com.server.Dao.ResidentDB;
 import com.server.Dao.UCTDB;
@@ -10,22 +10,18 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 @Service
-public class Server implements OnDayEnd, OnGetSignDetails {
-    public List<SignInItems> getSignInItems() {
-        return signInItems;
-    }
+public class Server implements OnSignedItems {
 
     private List<SignInItems> signInItems;
-    private  Resident resident;
+    private  final Resident resident;
 
-    private  ResidentDB residentDB;
+    private final ResidentDB residentDB;
 
-    private  UCTDB uctdb;
+    private final UCTDB uctdb;
     private  ResidentSignRules residentSignRules;
 
 
@@ -47,9 +43,8 @@ public class Server implements OnDayEnd, OnGetSignDetails {
      * @return - true if  signing meet rules else false
      */
     public boolean authenticateAndAuthorizationSchoolmate(Host host, SchoolMate visitor) throws Exception {
-        return validateHost(host) && validateSchoolmate(visitor) &&
-                countNumberSignIn(host.getHostNumber(), new Date(System.currentTimeMillis())) &&
-                withInSigningTime(LocalTime.now());
+        return   withInSigningTime(LocalTime.now()) & validateHost(host) & validateSchoolmate(visitor) &
+                countNumberSignIn(host.getHostNumber(), new Date(System.currentTimeMillis()));
     }
 
     /**
@@ -59,9 +54,8 @@ public class Server implements OnDayEnd, OnGetSignDetails {
      * @return - true if  signing meet rules else false
      */
     public boolean authenticateAndAuthorizationRelative(Host host, Relative visitor) throws Exception {
-        return validateHost(host) && validateId(visitor.getIdNumber()) &&
-                countNumberSignIn(host.getHostNumber(), new Date(System.currentTimeMillis())) &&
-                withInSigningTime(LocalTime.now());
+        return withInSigningTime(LocalTime.now()) & validateHost(host) & validateId(visitor.getIdNumber()) &
+                countNumberSignIn(host.getHostNumber(), new Date(System.currentTimeMillis())) ;
     }
 
     /***
@@ -89,14 +83,11 @@ public class Server implements OnDayEnd, OnGetSignDetails {
      * @return - true if the host haven't reach max else false
      */
     public   boolean countNumberSignIn(long hostId, Date date) throws Exception {
-        //signInItems = context.getBean(Register.class).getSignInItems();
        int []count  ={ 0};
        if(signInItems != null) {
-           signInItems.forEach(signInItems1 -> {
-               count[0] += (signInItems1.getHostId() == hostId &&
-                       signInItems1.getDate().toString().equalsIgnoreCase(date.toString()) &&
-                       signInItems1.getStatus().equalsIgnoreCase("sign in")) ? 1 : 0;
-           });
+           signInItems.forEach(signInItems1 -> count[0] += (signInItems1.getHostId() == hostId &&
+                   signInItems1.getDate().toString().equalsIgnoreCase(date.toString()) &&
+                   signInItems1.getStatus().equalsIgnoreCase("sign in")) ? 1 : 0);
        }
        if( count[0]< residentSignRules.getNumberVisitors()){
            return  true;
@@ -181,30 +172,36 @@ public class Server implements OnDayEnd, OnGetSignDetails {
         this.residentSignRules = residentSignRules;
     }
 
+    public List<SignInItems> getSignInItems() {
+        return signInItems;
+    }
 
-    @Override
-    public    void dayEndAlert(){
-        ArrayList<SignInItems>notSignedOut = new ArrayList<>();
-        if(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")).equalsIgnoreCase(
-                residentSignRules.getSignOutTime().format(DateTimeFormatter.ofPattern("hh:mm a")))
-        ){
-           signInItems.forEach(signInItems2 -> {
-               if(signInItems2.getStatus().equalsIgnoreCase("sign in") && signInItems2.getSignOutTime()==null){
-                    notSignedOut.add(signInItems2);
-               }
-           });
+    /**
+     * @return true at the end signing period else false
+     */
+    public  boolean endSigningPeriod(){
+        LocalTime now  = LocalTime.now();
+        return  residentSignRules.getSignOutTime()==now;
+    }
 
-        }
-       // context.getBean(Register.class).showNotSignedOutVisitors(notSignedOut);
-
+    /**
+     * @return true at start of signing period else false
+     */
+    public  boolean startSigningPeriod(){
+        LocalTime now  = LocalTime.now();
+        return  residentSignRules.getSigInTime()==now;
     }
 
 
+
+
+
     /**
-     * @param signInItems
+     * Get List of signed in or out SigningItems
+     * @param signInItems - is list of sign in and out
      */
     @Override
-    public void getSignDetail(List<SignInItems> signInItems) {
+    public void getSignedItems(List<SignInItems> signInItems) {
         this.signInItems = signInItems;
 
     }

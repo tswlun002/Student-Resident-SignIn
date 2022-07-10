@@ -1,17 +1,17 @@
 package com.application;
 import com.host.Host;
 import com.register.Register;
+import com.register.SignInItems;
 import com.register.SignVisitor;
+import com.server.*;
 import com.server.Dao.ResidentDB;
 import com.server.Dao.UCTDB;
-import com.server.Resident;
-import com.server.ResidentSignRules;
-import com.server.Server;
 import com.visitor.Relative;
 import com.visitor.SchoolMate;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import java.util.ArrayList;
 
 @Configuration
 @ComponentScan(basePackages = {"com.host","com.visitor", "com.register", "com.server"})
@@ -66,6 +66,23 @@ public class MainConfig {
                                    @Qualifier ("defaultedParamSchoolmate") SchoolMate schoolMate,
                                    @Qualifier ("defaultRegister") Register register) throws Throwable {
         return  new SignVisitor(host,schoolMate,relative,register);
+    }
+   /*
+    @Qualifier("onSigningPeriodInServer")
+    @Bean
+    public OnSigningPeriod onSigningPeriod(  @Qualifier("serverObj") Server server){
+        return  server;
+    }*/
+
+    @Qualifier("onHostNotSignedOut")
+    public OnHostNotSignedOut onHostNotSignedOut(  @Qualifier ("defaultRegister") Register theRegister){
+        return  theRegister != null ? theRegister :
+                new OnHostNotSignedOut() {
+                    @Override
+                    public void showNotSignedOutVisitors(ArrayList<SignInItems> signInItems) {
+
+                    }
+                };
     }
 
 
