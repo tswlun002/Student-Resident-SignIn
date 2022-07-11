@@ -1,6 +1,6 @@
 package com.server;
 import com.host.Host;
-import com.register.SignInItems;
+import com.register.Signing;
 import com.server.Dao.ResidentDB;
 import com.server.Dao.UCTDB;
 import com.visitor.SchoolMate;
@@ -35,7 +35,7 @@ class ServerTest {
     @Autowired
     private Resident resident;
 
-    private List<SignInItems> signInItemsList ;
+    private List<Signing> signingList;
 
     ServerTest() {
     }
@@ -43,7 +43,7 @@ class ServerTest {
     @BeforeAll
     void setUp() {
         server  = new Server(resident,residentSignRules,residentDB,uctDatabase);
-        signInItemsList = new ArrayList<>();
+        signingList = new ArrayList<>();
     }
 
 
@@ -102,14 +102,14 @@ class ServerTest {
         Assertions.assertFalse(server.validateId(id));
     }
 
-    @DisplayName("Test interface OnSignedItems")
+    @DisplayName("Test interface OnSignings")
     @ParameterizedTest
     @CsvFileSource(resources = "/signedVisitors.csv")
     public  void checkServerIsAbleToGetSignedVisitorDeatils(long hostId, long visitId, String room, String status){
         Date date = new Date(System.currentTimeMillis());
         Time signTime = new Time(System.currentTimeMillis());
-        signInItemsList.add( new SignInItems(date,signTime,hostId,visitId,room,status));
-        server.getSignedItems(signInItemsList);
+        signingList.add( new Signing(date,signTime,hostId,visitId,room,status));
+        server.getSignedItems(signingList);
         Assertions.assertTrue( !server.getSignInItems().isEmpty() && server.getSignInItems().size()<=5);
     }
     @DisplayName("Test host to sign when  visitor still less than 3")
@@ -127,8 +127,8 @@ class ServerTest {
     void add(long hostId, long visitId, String room, String status) {
         Date date = new Date(System.currentTimeMillis());
         Time signTime = new Time(System.currentTimeMillis());
-        signInItemsList.add( new SignInItems(date,signTime,hostId,visitId,room,status));
-        server.getSignedItems(signInItemsList);
+        signingList.add( new Signing(date,signTime,hostId,visitId,room,status));
+        server.getSignedItems(signingList);
         Assertions.assertTrue(server.getSignInItems().size()<=10 && server.getSignInItems().size()>=5);
     }
     @DisplayName("Test host to sign when  visitor still more than 3")
@@ -139,8 +139,8 @@ class ServerTest {
 
         Date date = new Date(System.currentTimeMillis());
         Time signTime = new Time(System.currentTimeMillis());
-        signInItemsList.add( new SignInItems(date,signTime,hostId,visitId,room,status));
-        server.getSignedItems(signInItemsList);
+        signingList.add( new Signing(date,signTime,hostId,visitId,room,status));
+        server.getSignedItems(signingList);
         Assertions.assertEquals(
                 Assertions.assertThrows(Exception.class,()->
                         server.countNumberSignIn(hostId, date)).getMessage(),
@@ -168,9 +168,9 @@ class ServerTest {
     @Test
     public  void checkServerAlertWhenSigningPeriodElapses(){
         server.endSigningPeriodAlert(new Register());
-        //onHostNotSignedOut.showNotSignedOutVisitors((ArrayList<SignInItems>) signInItemsList);
-        Mockito.verify(onHostNotSignedOut).showNotSignedOutVisitors((ArrayList<SignInItems>) argCaptor.capture());
-        Assertions.assertEquals(signInItemsList,argCaptor.getValue());
+        //onHostNotSignedOut.showNotSignedOutVisitors((ArrayList<Signing>) signingList);
+        Mockito.verify(onHostNotSignedOut).showNotSignedOutVisitors((ArrayList<Signing>) argCaptor.capture());
+        Assertions.assertEquals(signingList,argCaptor.getValue());
     }*/
 
 

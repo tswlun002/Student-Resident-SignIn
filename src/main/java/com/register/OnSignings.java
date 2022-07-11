@@ -3,6 +3,6 @@ import org.springframework.stereotype.Component;
 import java.util.*;;
 
 @Component
-public interface OnSignedItems {
-    public void getSignedItems(List<SignInItems> signInItems);
+public interface OnSignings {
+    public void getSignedItems(List<Signing> signInItems);
 }

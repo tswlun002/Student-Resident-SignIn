@@ -1,7 +1,7 @@
 package com.server;
 import com.host.Host;
-import com.register.OnSignedItems;
-import com.register.SignInItems;
+import com.register.OnSignings;
+import com.register.Signing;
 import com.server.Dao.ResidentDB;
 import com.server.Dao.UCTDB;
 import com.visitor.Relative;
@@ -14,9 +14,9 @@ import java.util.Date;
 import java.util.List;
 
 @Service
-public class Server implements OnSignedItems {
+public class Server implements OnSignings {
 
-    private List<SignInItems> signInItems;
+    private List<Signing> signInItems;
     private  final Resident resident;
 
     private final ResidentDB residentDB;
@@ -43,7 +43,7 @@ public class Server implements OnSignedItems {
      * @return - true if  signing meet rules else false
      */
     public boolean authenticateAndAuthorizationSchoolmate(Host host, SchoolMate visitor) throws Exception {
-        return   withInSigningTime(LocalTime.now()) & validateHost(host) & validateSchoolmate(visitor) &
+        return    withInSigningTime(LocalTime.now()) & validateHost(host) & validateSchoolmate(visitor) &
                 countNumberSignIn(host.getHostNumber(), new Date(System.currentTimeMillis()));
     }
 
@@ -172,7 +172,7 @@ public class Server implements OnSignedItems {
         this.residentSignRules = residentSignRules;
     }
 
-    public List<SignInItems> getSignInItems() {
+    public List<Signing> getSignInItems() {
         return signInItems;
     }
 
@@ -201,7 +201,7 @@ public class Server implements OnSignedItems {
      * @param signInItems - is list of sign in and out
      */
     @Override
-    public void getSignedItems(List<SignInItems> signInItems) {
+    public void getSignedItems(List<Signing> signInItems) {
         this.signInItems = signInItems;
 
     }
