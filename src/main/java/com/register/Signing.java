@@ -1,8 +1,7 @@
 package com.register;
-import org.springframework.stereotype.Component;
 import java.sql.Time;
 import java.util.Date;
-public class SignInItems{
+public class Signing {
 
     private Date date;
     private Time signInTime;
@@ -21,7 +20,7 @@ public class SignInItems{
      * @param roomNumber -  Host room number
      * @param status - sign in status ( signedIn or signedOut)
      */
-    public SignInItems(Date date, Time signInTime, long hostId, long visitorId, String roomNumber, String status) {
+    public Signing(Date date, Time signInTime, long hostId, long visitorId, String roomNumber, String status) {
         this.date = date;
         this.signInTime = signInTime;
         this.hostId = hostId;
@@ -34,7 +33,7 @@ public class SignInItems{
      * Copy Construct
      * @param registerItem - register copy from
      */
-    public SignInItems(SignInItems registerItem) {
+    public Signing(Signing registerItem) {
         this.date = registerItem.date;
         this.signInTime = registerItem.signInTime;
         this.signOutTime = registerItem.signOutTime;
@@ -101,7 +100,7 @@ public class SignInItems{
 
     @Override
     public String toString() {
-        return "SignItems{" +
+        return "Signing{" +
                 "date=" + date +
                 ", signInTime=" + signInTime +
                 ", signOutTime=" + signOutTime +

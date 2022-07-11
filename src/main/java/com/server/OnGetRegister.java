@@ -1,10 +1,10 @@
 package com.server;
 
-import com.register.SignInItems;
+import com.register.Signing;
 
 import java.util.ArrayList;
 
 public interface OnGetRegister {
 
-    public  void getRegister(ArrayList<SignInItems> signInItems);
+    public  void getRegister(ArrayList<Signing> signInItems);
 }

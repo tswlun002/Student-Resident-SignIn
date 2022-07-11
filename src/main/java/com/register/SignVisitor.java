@@ -83,7 +83,10 @@ public class SignVisitor {
             String signingType = keyboard.nextLine();
             if (signingType.equalsIgnoreCase("in")) {
                 boolean siginedIn = signIn(keyboard, register, host, schoolMate,relative);
-                if (siginedIn) System.out.println("Successful signed in");
+                if (siginedIn) {
+                    register.showAllVisitors();
+                    System.out.println("Successful signed in");
+                }
                 else System.out.println("Can't sign in");
             } else if (signingType.equalsIgnoreCase("out")) {
                 boolean signedOut = signOut(keyboard, register);
@@ -241,7 +244,7 @@ public class SignVisitor {
             setHostDetails(host);
             setDetailsVisitor(schoolMate);
             return register.setSignInItem(host, schoolMate,
-                    new SignInItems(new Date(System.currentTimeMillis()), new Time(System.currentTimeMillis()), host.getHostNumber(),
+                    new Signing(new Date(System.currentTimeMillis()), new Time(System.currentTimeMillis()), host.getHostNumber(),
                             ((SchoolMate) visitor).getStudentNumber(), host.getRoomNumber(), "Sign In")
             );
         }
@@ -249,7 +252,7 @@ public class SignVisitor {
             setHostDetails(host);
             setDetailsVisitor(relative);
             return register.setSignInItem(host, relative,
-                    new SignInItems(new Date(System.currentTimeMillis()), new Time(System.currentTimeMillis()), host.getHostNumber(),
+                    new Signing(new Date(System.currentTimeMillis()), new Time(System.currentTimeMillis()), host.getHostNumber(),
                             ((Relative) visitor).getIdNumber(), host.getRoomNumber(), "Sign In")
             );
         }
@@ -265,24 +268,13 @@ public class SignVisitor {
      * @param register  -  object of register we sign out on
      * @return
      */
-    public   boolean signOut(Scanner keyboard, Register register){
+    public   boolean signOut(Scanner keyboard, Register register) throws Exception {
         idValidation("Enter  your student number (integer)",keyboard);
         long hostId  = Long.parseLong(keyboard.nextLine().trim());
         idValidation("Enter  visitor student/ID number (integer)",keyboard);
         long  visitorId = Long.parseLong(keyboard.nextLine().trim());
         Date date  = new Date(System.currentTimeMillis());
-
-        boolean signedOut = false;
-        for(SignInItems item : register.getSignInItems()){
-            if(item.getDate().toString().equalsIgnoreCase(date.toString()) && item.getHostId() ==hostId &&
-                    item.getVisitorId()== visitorId){
-                item.setStatus("Sign Out");
-                item.setSignOutTime(new Time(System.currentTimeMillis()));
-                signedOut=true;
-                break;
-            }
-        };
-        return signedOut;
+        return register.signingOutVisitor(hostId,visitorId,date);
     }
 
     /**

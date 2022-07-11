@@ -1,7 +1,7 @@
 package com.application;
 import com.host.Host;
 import com.register.Register;
-import com.register.SignInItems;
+import com.register.Signing;
 import com.register.SignVisitor;
 import com.server.*;
 import com.server.Dao.ResidentDB;
@@ -79,7 +79,7 @@ public class MainConfig {
         return  theRegister != null ? theRegister :
                 new OnHostNotSignedOut() {
                     @Override
-                    public void showNotSignedOutVisitors(ArrayList<SignInItems> signInItems) {
+                    public void showNotSignedOutVisitors(ArrayList<Signing> signInItems) {
 
                     }
                 };

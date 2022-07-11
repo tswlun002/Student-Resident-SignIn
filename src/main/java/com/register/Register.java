@@ -6,74 +6,176 @@ import com.visitor.Relative;
 import com.visitor.SchoolMate;
 import com.visitor.Visitor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.sql.Date;
+import java.sql.Time;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
-public class Register implements OnHostNotSignedOut {
-
-    private ArrayList<SignInItems> signInItems = new ArrayList<>();
-
-
-
+public class Register implements OnHostNotSignedOut, OnSigningOut{
+    private ArrayList<Signing> signInItems;
     @Autowired
-    private ApplicationContext context;
-    public Register(){}
+    private Server server;
 
+    /**
+     * Default construct
+     */
+    public Register(){
+        signInItems = new ArrayList<>();
+    }
+
+    /**
+     * Copy construct
+     * @param register - register copy from
+     */
     public Register(Register register){
         this.signInItems=register.signInItems;
     }
-    public  boolean  setSignInItem(Host host, Visitor visitor, SignInItems newItem) throws Exception {
-         Server server = context.getBean(Server.class);
-         server.getSignDetail(signInItems);
-        boolean authenticated = (visitor instanceof Relative) ?
-                server.authenticateAndAuthorizationRelative(host, (Relative) visitor) :
-                server.authenticateAndAuthorizationSchoolmate(host, (SchoolMate) visitor);
-        if(authenticated) {
-            boolean is_newItemInRegister=false;
-            for (SignInItems item : signInItems) {
-                if(item.getVisitorId() == newItem.getVisitorId()) break;
-            }
-            if (!is_newItemInRegister) {
-                signInItems.add(newItem);
-                return  true;
-            }
-            else throw  new Exception(host.getFullName() +" Already Signed in " + visitor.getFullName());
+
+    /***
+     * Store signed item
+     * First check if host is authorized to sign in and check if the visitor is valid
+     * If all checks are true, sign is authorized and sign item is stored
+     * @param host - host object signed visitor
+     * @param visitor - visitor object  being signed
+     * @param newItem - signed item
+     * @return true visitor successful not already signed else false
+     * @throws Exception -  authorization fails
+     */
+    public  boolean  setSignInItem(Host host, Visitor visitor, Signing newItem) throws Exception {
+         server.getSignedItems(signInItems);
+        boolean authenticated = false;
+        if(!alreadySignedVisitor(newItem)) {
+             authenticated =  (visitor instanceof Relative) ?
+                     server.authenticateAndAuthorizationRelative(host, (Relative) visitor) :
+                     server.authenticateAndAuthorizationSchoolmate(host, (SchoolMate) visitor);
+           if(authenticated)signInItems.add(newItem) ;
+           else{
+               try {
+                   throw new Exception("Not allowed");
+               }catch (Exception e){
+                   return false;
+               }
+               finally {
+                   System.out.println("Not Allowed to sign in");
+               }
+
+           }
         }
-        return false;
+        return authenticated;
     }
-    public void setSignInItems(ArrayList<SignInItems> signInItems) {
+
+    /**
+     * Check if visitor is not already signed
+     * @param newItem - signItem check if not already on register
+     * @return true if already signed else false
+     */
+    public  boolean alreadySignedVisitor(Signing newItem){
+        return signInItems.stream().anyMatch(item->
+                 item.getVisitorId()==newItem.getVisitorId()
+                 && item.getStatus().equalsIgnoreCase(newItem.getStatus()) );
+    }
+
+    public  void  clearItems(){
+        signInItems.clear();
+        signInItems = new ArrayList<>();
+    }
+
+    /**
+     * @param signInItems - List of signInItems
+     */
+    public void setSignInItems(ArrayList<Signing> signInItems) {
         this.signInItems = signInItems;
     }
-    public  ArrayList<SignInItems> getSignInItems(){return  this.signInItems;}
 
-    public  void showItemsRegister(){
-        signInItems.forEach(System.out::println);
-    }
+    /**
+     * @return List of signInItems
+     */
+    public  ArrayList<Signing> getSignInItems(){return  this.signInItems;}
+
+
+
 
     /**
      * @param signInItems - list of host not yet signed out after 12:00 am
      */
     @Override
-    public  void showNotSignedOutVisitors(ArrayList<SignInItems> signInItems) {
+    public  void showNotSignedOutVisitors(ArrayList<Signing> signInItems) {
         AtomicInteger index  = new AtomicInteger();
         signInItems.forEach(item->{
             System.out.printf("%d. %s",index.get(),item);
             index.addAndGet(1);
         });
     }
-
-    public  void showAllVisitors(){
-        AtomicInteger index  = new AtomicInteger();
-        signInItems.forEach(item->{
-            System.out.printf("%d. %s",index.get(),item);
-            index.addAndGet(1);
-        });
+    /**
+     * Prints signInItems
+     */
+    public  void showAllVisitors() throws InterruptedException {
+        Thread inflateSignedIn = new Thread(new InflateSignedIn(signInItems));
+        inflateSignedIn.start();
     }
 
 
+    /**
+     * Allow signing out of visitor
+     * Check if its signing time , verify host id and visitor id are register
+     * @param hostId  - id of the host
+     * @param visitorId - visitor id
+     * @param date - date of signing in
+     * @throws  - exception when signing out after signing time has passed
+     * @return - true when signing out on time and ids appear on register else false
+     */
+    @Override
+    public boolean signingOutVisitor(long hostId, long visitorId, Date date){
+        return getSignInItems().stream().anyMatch(
+               item->{
+                       boolean okay  =    item.getDate().toString().equalsIgnoreCase(date.toString())&&
+                               item.getHostId()==hostId && item.getVisitorId()==visitorId;
+                       if(okay){
 
+                           item.setSignOutTime(new Time(System.currentTimeMillis()));
+                           item.setStatus("sign out");
+                           return  true;
+                       }else return  false;
+               });
+    }
 
+     static class InflateSignedIn implements Runnable {
+
+        List<Signing> signingList ;
+             public  InflateSignedIn(List<Signing> signingList){
+                 this.signingList = signingList;
+             }
+        /**
+             * When an object implementing interface {@code Runnable} is used
+             * to create a thread, starting the thread causes the object's
+             * {@code run} method to be called in that separately executing
+             * thread.
+             * <p>
+             * The general contract of the method {@code run} is that it may
+             * take any action whatsoever.
+             *
+             * @see Thread#run()
+             */
+            @Override
+            public void run() {
+                while( ! LocalTime.of(7,10,0,0).
+                        format(DateTimeFormatter.ofPattern("hh:mm a")).equalsIgnoreCase(
+                                LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a"))));
+                System.out.println("/////////////////////////////////////////////////////\n" +
+                        "                        Currently signed People          \n" +
+                        "////////////////////////////////////////////////////////////////////");
+                for ( Signing item :signingList){
+                    if (item.getStatus().equalsIgnoreCase("sign in")) {
+                        System.out.println(item);
+                    }
+                }
+                // }
+            }
+        }
 }
