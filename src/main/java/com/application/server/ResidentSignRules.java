@@ -1,4 +1,4 @@
-package com.server;
+package com.application.server;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalTime;

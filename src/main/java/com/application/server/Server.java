@@ -1,11 +1,12 @@
-package com.server;
-import com.host.Host;
-import com.register.OnSignings;
-import com.register.Signing;
-import com.server.Dao.ResidentDB;
-import com.server.Dao.UCTDB;
-import com.visitor.Relative;
-import com.visitor.SchoolMate;
+package com.application.server;
+import com.application.server.model.ResidentStudentService;
+import com.application.student.model.StudentService;
+import com.application.register.model.OnSignings;
+import com.application.register.model.Signing;
+import com.application.server.Dao.ResidentDB;
+import com.application.server.Dao.School;
+import com.application.visitor.model.Relative;
+import com.application.visitor.model.SchoolMate;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -17,11 +18,11 @@ import java.util.List;
 public class Server implements OnSignings {
 
     private List<Signing> signInItems;
-    private  final Resident resident;
+    private  final ResidentStudentService residentStudentService;
 
     private final ResidentDB residentDB;
 
-    private final UCTDB uctdb;
+    private final School school;
     private  ResidentSignRules residentSignRules;
 
 
@@ -29,39 +30,39 @@ public class Server implements OnSignings {
     /**
      *Default construct
      */
-    public Server(Resident resident, ResidentSignRules residentSignRules, ResidentDB residentDB, UCTDB uctdb){
-        this.resident =resident;
+    public Server(ResidentStudentService residentStudentService, ResidentSignRules residentSignRules, ResidentDB residentDB, School school){
+        this.residentStudentService = residentStudentService;
         this.residentSignRules=residentSignRules;
         this.residentDB=residentDB;
-        this.uctdb =uctdb;
+        this.school = school;
     }
 
     /**
-     * Authenticate host, validate visitor , check max signings of host and check signing time
-     * @param host - host object
+     * Authenticate studentService, validate visitor , check max signings of studentService and check signing time
+     * @param studentService - studentService object
      * @param visitor - visitor object
      * @return - true if  signing meet rules else false
      */
-    public boolean authenticateAndAuthorizationSchoolmate(Host host, SchoolMate visitor) throws Exception {
-        return    withInSigningTime(LocalTime.now()) & validateHost(host) & validateSchoolmate(visitor) &
-                countNumberSignIn(host.getHostNumber(), new Date(System.currentTimeMillis()));
+    public boolean authenticateAndAuthorizationSchoolmate(StudentService studentService, SchoolMate visitor) throws Exception {
+        return    withInSigningTime(LocalTime.now()) & validateHost(studentService) & validateSchoolmate(visitor) &
+                countNumberSignIn(studentService.getHostNumber(), new Date(System.currentTimeMillis()));
     }
 
     /**
-     * Authenticate host, validate visitor , check max signings of host and check signing time
-     * @param host - host object
+     * Authenticate studentService, validate visitor , check max signings of studentService and check signing time
+     * @param studentService - studentService object
      * @param visitor - visitor object
      * @return - true if  signing meet rules else false
      */
-    public boolean authenticateAndAuthorizationRelative(Host host, Relative visitor) throws Exception {
-        return withInSigningTime(LocalTime.now()) & validateHost(host) & validateId(visitor.getIdNumber()) &
-                countNumberSignIn(host.getHostNumber(), new Date(System.currentTimeMillis())) ;
+    public boolean authenticateAndAuthorizationRelative(StudentService studentService, Relative visitor) throws Exception {
+        return withInSigningTime(LocalTime.now()) & validateHost(studentService) & validateId(visitor.getIdNumber()) &
+                countNumberSignIn(studentService.getHostNumber(), new Date(System.currentTimeMillis())) ;
     }
 
     /***
      *  Check sign in is with sign in period
-     * @param currentTime - time host want to sign
-     * @return - true if current time is within the period of signing in the resident
+     * @param currentTime - time student want to sign
+     * @return - true if current time is within the period of signing in the residentStudentService
      */
     public   boolean withInSigningTime(LocalTime currentTime) throws Exception {
 
@@ -78,9 +79,9 @@ public class Server implements OnSignings {
     }
 
     /**
-     *  Check if the host have not reached sign max
+     *  Check if the student have not reached sign max
      * @param date - date of the sign
-     * @return - true if the host haven't reach max else false
+     * @return - true if the student haven't reach max else false
      */
     public   boolean countNumberSignIn(long hostId, Date date) throws Exception {
        int []count  ={ 0};
@@ -92,21 +93,21 @@ public class Server implements OnSignings {
        if( count[0]< residentSignRules.getNumberVisitors()){
            return  true;
        } else {
-           throw new Exception("Host  can't sign more than  3 visitor.");
+           throw new Exception("StudentService  can't sign more than  3 visitor.");
        }
     }
 
     /**
-     * Validate is the said host  belong to the resident
-     * @param host - object of the host
-     * @return - true if said host belong to res else false
+     * Validate is the said studentService  belong to the residentStudentService
+     * @param studentService - object of the studentService
+     * @return - true if said studentService belong to res else false
      */
-    public    boolean validateHost(Host host) throws Exception {
-        if( residentDB.getHostList().stream().anyMatch(host::equals)){
+    public    boolean validateHost(StudentService studentService) throws Exception {
+        if( residentDB.getHostList().stream().anyMatch(studentService::equals)){
             return  true;
         }
         else {
-            throw new Exception("Host " + host.getFullName() + " is not found in Resident database");
+            throw new Exception("StudentService " + studentService.getFullName() + " is not found in ResidentStudentService database");
         }
     }
 
@@ -116,7 +117,7 @@ public class Server implements OnSignings {
      * @return - true if the student is register else false
      */
     public    boolean validateSchoolmate(SchoolMate student) throws Exception {
-        if(  uctdb.getStudent().stream().anyMatch(student::equals))
+        if(  school.getStudent().stream().anyMatch(student::equals))
             return  true;
         else {
             throw new Exception("Visitor " + student.getFullName() + " is not found in UCT database");
