@@ -16,7 +16,7 @@ import java.util.Objects;
 public class Residence {
 
     @Id
-    @Column(name = "residence_name")
+    @Column(name = "residenceName")
     String residenceName;
     @Id
     private String blocks;
@@ -25,7 +25,7 @@ public class Residence {
     private int numberRoom;
     private  int capacity;
     @ManyToOne
-    @JoinColumn(name = "rules_id")
+    @JoinColumn(name = "rulesId")
     private ResidenceRules residenceRules;
 
 

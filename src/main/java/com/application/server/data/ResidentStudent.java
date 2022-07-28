@@ -13,6 +13,7 @@ import java.util.Objects;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(name ="ResidentStudent" )
 public class ResidentStudent {
     @Id
     @Column(name = "id", nullable = false)
@@ -24,18 +25,18 @@ public class ResidentStudent {
     @ManyToOne
     @JoinColumns({
             @JoinColumn(name = "blocks",referencedColumnName = "blocks"),
-            @JoinColumn(name = "residence_name",referencedColumnName = "residence_name")
+            @JoinColumn(name = "residence",referencedColumnName = "residenceName")
     })
     private  Residence residence;
 
     @ManyToOne
     @JoinColumns({
-            @JoinColumn(name="student_id", referencedColumnName="studentNumber"),
-            @JoinColumn(name="student_name", referencedColumnName="fullname")
+            @JoinColumn(name="studentId", referencedColumnName="studentNumber"),
+            @JoinColumn(name="studentFullname", referencedColumnName="fullname")
     })
     private Student student;
-    @OneToOne(mappedBy = "resident")
-    RegisterEntity register;
+    /*@OneToOne(mappedBy = "resident")
+    RegisterEntity register;*/
 
     @Override
     public boolean equals(Object o) {

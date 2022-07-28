@@ -22,11 +22,11 @@ public class ResidenceRules {
     @Column(name = "id", nullable = false)
     private Long id;
     @NonNull
-    @Column(name = "signing_in_time", nullable = false)
+    @Column(name = "signingInTime", nullable = false)
     private LocalTime startSigningTime;
-    @Column(name = "signing_out_time", nullable = true)
+    @Column(name = "signingOutTime", nullable = true)
     private  LocalTime endSigningTime;
-    @Column(name = "maximum_visitor_per_host",nullable = false)
+    @Column(name = "maximumVisitors",nullable = false)
     private  int numberVisitor;
 
 

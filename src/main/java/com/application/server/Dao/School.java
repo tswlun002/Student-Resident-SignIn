@@ -1,5 +1,4 @@
 package com.application.server.Dao;
-import com.application.server.repository.SchoolRepository;
 import com.application.visitor.model.SchoolMate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,7 +18,7 @@ public class School {
                     new SchoolMate("Sizamkele", "0888148267",345,  "Forest Hill"),
             });
     //@Autowired
-    //private SchoolRepository schoolRepository;
+    //private ResidenceDepartmentRepository residenceDepartmentRepository;
     @Autowired
     public School(){}
     public List<SchoolMate> getStudent() {

@@ -1,4 +1,5 @@
 package com.application.server.repository;
+import com.application.server.data.Residence;
 import com.application.student.data.Student;
 import com.application.server.data.ResidentStudent;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,10 +10,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 @Repository
 public interface ResidentStudentRepository extends JpaRepository<ResidentStudent,String> {
-    @Query(value = "select * from resident_student where student_id is null and student_name is null", nativeQuery = true)
+    @Query(value = "select * from ResidentStudent where studentId is null and studentFullname is null", nativeQuery = true)
     public List<ResidentStudent> getAllAvailableRooms();
     @Transactional
     @Modifying
-    @Query("update ResidentStudent set student=:student where id=:Id and blocks=:blocks and flat=:flat and room=:room")
-    public  void updateWhereStudent_student_numberIsNull(Student student, long Id,String blocks, String flat, String room);
+    @Query(value = "update ResidentStudent set studentId=:studentId, studentFullname=:fullname " +
+            "where id=:Id and residence=:residence and blocks=:blocks and flat=:flat and room=:room",
+    nativeQuery = true)
+    public  void placeStudent(long studentId, String fullname, long Id,  String residence, String blocks, String flat, String room);
 }

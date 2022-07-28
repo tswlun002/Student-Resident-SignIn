@@ -3,6 +3,7 @@ import com.application.student.data.Student;
 import lombok.*;
 import org.hibernate.Hibernate;
 import javax.persistence.*;
+import java.io.Serializable;
 import java.util.Objects;
 
 @Builder
@@ -12,10 +13,11 @@ import java.util.Objects;
 @Getter
 @Setter
 @ToString
-public class School {
+@Table(name = "ResidenceDepartment")
+public class ResidenceDepartment implements Serializable {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "school_seq")
-    @SequenceGenerator(name = "school_seq")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "schoolSeq")
+    @SequenceGenerator(name = "schoolSeq")
     @Column(name = "id", nullable = false)
     private Integer id;
     public Integer getId() {
@@ -23,8 +25,8 @@ public class School {
     }
     @ManyToOne
     @JoinColumns({
-            @JoinColumn(name="student_id", referencedColumnName="studentNumber"),
-            @JoinColumn(name="student_name", referencedColumnName="fullname")
+            @JoinColumn(name="studentId", referencedColumnName="studentNumber"),
+            @JoinColumn(name="studentFullname", referencedColumnName="fullname")
     })
     private Student students;
     @Column(nullable = false)
@@ -32,7 +34,7 @@ public class School {
     @ManyToOne
     @JoinColumns({
             @JoinColumn(name = "blocks",referencedColumnName = "blocks"),
-            @JoinColumn(name = "residence_name",referencedColumnName = "residence_name")
+            @JoinColumn(name = "residence",referencedColumnName = "residenceName")
     })
     private Residence residence;
 
@@ -45,7 +47,7 @@ public class School {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
-        School that = (School) o;
+        ResidenceDepartment that = (ResidenceDepartment) o;
         return id != null && Objects.equals(id, that.id);
     }
 
