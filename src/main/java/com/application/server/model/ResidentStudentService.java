@@ -94,9 +94,10 @@ public  class ResidentStudentService {
      * Places student(s) available rooms
      * @return  true if student(s) is placed else false
      */
-    public  boolean placeStudentRoom(){
-        List<Student> students = departmentService.studentsPlacedAtForestHill();
+    public  boolean placeStudentRoom(String residence){
         List<ResidentStudent>roomsAvailable  = availableRoom();
+        List<Student> students = departmentService.studentsPlacedAt(residence);
+
         boolean placed = false;
         for(int index=0 ; index<roomsAvailable.size(); index++){
                     if(index<students.size()){

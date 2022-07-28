@@ -12,59 +12,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
-
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Service
 public class ResidentDepartmentService {
-
     @Autowired
     private ResidenceDepartmentRepository residenceDepartmentRepository;
     @Autowired private StudentService studentService;
 
     @Autowired
     ResidenceService residenceService;
-
     @Autowired
     private  ResidentStudentService residentStudentService;
     private List<Student> students;
     private String accommodation_status;
     private List<ResidentStudent> resident;
-
-
-    public void setStudents(List<Student> students) {
-        this.students = students;
-    }
-
-    public void setAccommodation_status(String accommodation_status) {
-        this.accommodation_status = accommodation_status;
-    }
-
-    public void setResident(List<ResidentStudent> resident) {
-        this.resident = resident;
-    }
-
-    public List<Student> getStudents() {
-        return students;
-    }
-
-    public String getAccommodation_status() {
-        return accommodation_status;
-    }
-
-    public List<ResidentStudent> getResident() {
-        return resident;
-    }
-    public  void saveStudents(){
-        students.forEach(
-                student->{
-                    String status  = student.getAccommodation()==null?"no":student.getAccommodation();
-                    ResidenceDepartment residenceDepartment = ResidenceDepartment.builder().students(student).accommodation(status).build();
-                    residenceDepartmentRepository.save(residenceDepartment);
-                }
-        );
-    }
 
     /**
      * Save all registered students
@@ -119,8 +82,8 @@ public class ResidentDepartmentService {
      * All Student placed at forest hill by residence department
      * @return list of student
      */
-    protected  List<Student> studentsPlacedAtForestHill(){
-        List<Long> studentId= residenceDepartmentRepository.getStudentAtResidence("Forest Hill");
+    protected  List<Student> studentsPlacedAt(String residence){
+        List<Long> studentId= residenceDepartmentRepository.getStudentAtResidence(residence);
         List<Student>studentList = new ArrayList<>();
         for(Student student : studentService.getAllStudent()){
             for(long studentID : studentId){
@@ -128,6 +91,30 @@ public class ResidentDepartmentService {
             }
         }
         return studentList;
+    }
+
+    public void setStudents(List<Student> students) {
+        this.students = students;
+    }
+
+    public void setAccommodation_status(String accommodation_status) {
+        this.accommodation_status = accommodation_status;
+    }
+
+    public void setResident(List<ResidentStudent> resident) {
+        this.resident = resident;
+    }
+
+    public List<Student> getStudents() {
+        return students;
+    }
+
+    public String getAccommodation_status() {
+        return accommodation_status;
+    }
+
+    public List<ResidentStudent> getResident() {
+        return resident;
     }
 
 }
