@@ -1,4 +1,5 @@
 package com.application.server.model;
+import com.application.server.data.ResidenceRules;
 import com.application.server.repository.ResidentRulesRepository;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,4 +24,13 @@ public class ResidenceRulesService {
         repository.deleteById(id);
     }
 
+    public boolean updateRules(ResidenceRules residenceRules) {
+        boolean updated = false;
+        ResidenceRules rules =repository.getReferenceById(residenceRules.getId());
+        if(rules!=null) {
+            repository.save(rules);
+            updated=true;
+        }
+        return  updated;
+    }
 }

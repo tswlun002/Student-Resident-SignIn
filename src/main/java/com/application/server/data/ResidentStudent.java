@@ -21,7 +21,7 @@ public class ResidentStudent {
     private  int floor;
     private  String flat;
     private  String room;
-    @ManyToOne
+    @OneToOne
     @JoinColumns({
             @JoinColumn(name = "residenceId", referencedColumnName = "id"),
             @JoinColumn(name = "blocks",referencedColumnName = "blocks"),
@@ -41,7 +41,7 @@ public class ResidentStudent {
         if (this == o) return true;
         if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
         ResidentStudent residentStudent = (ResidentStudent) o;
-        return  Objects.equals(id, residentStudent.id);
+        return id!=null && Objects.equals(id, residentStudent.id);
     }
 
     @Override

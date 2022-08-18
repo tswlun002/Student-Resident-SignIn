@@ -1,6 +1,7 @@
 package com.application.server.model;
 import com.application.server.data.Address;
 import com.application.server.data.Residence;
+import com.application.server.data.ResidenceRules;
 import com.application.server.repository.ResidenceRepository;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -57,6 +58,26 @@ public class ResidenceService {
             residence1.getAddress().setCity(address.getCity());
             residence1.getAddress().setPostcode(address.getPostcode());
             updated= addressService.updateAddress(residence1.getAddress());
+        }
+        return updated;
+    }
+
+    /**
+     * Update rules of the residence.
+     * @param residence - updated residence (residence with new properties)
+     * @return - true if successfully updated rules otherwise false
+     */
+    @Transactional
+    @Modifying
+    public  boolean updateResidenceRules(Residence residence){
+        boolean updated=false;
+        Residence residence1 = repository.getResidence(residence.getResidenceName(),residence.getBlocks());
+        if(residence1 != null){
+            ResidenceRules rules =  residence.getResidenceRules();
+            residence1.getResidenceRules().setStartSigningTime(rules.getStartSigningTime());
+            residence1.getResidenceRules().setEndSigningTime(rules.getEndSigningTime());
+            residence1.getResidenceRules().setNumberVisitor(rules.getNumberVisitor());
+            updated= rulesService.updateRules(residence1.getResidenceRules());
         }
         return updated;
     }
