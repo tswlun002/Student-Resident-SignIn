@@ -9,16 +9,23 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 @Repository
 public interface ResidenceDepartmentRepository extends JpaRepository<ResidenceDepartment,Long> {
-    @Query(value = "select * from ResidenceDepartment where studentId <:id and accommodation='yes' and residence is null" +
-            " and blocks is null", nativeQuery = true)
-    List<ResidenceDepartment> getStudentWithNoRes(long id);
+    @Query(value = "select * from ResidenceDepartment where   accommodation='yes' and residence is null" +
+            " and blocks is null order by id limit :limit", nativeQuery = true)
+    List<ResidenceDepartment> getFirstLimitStudents(long limit);
+
+    @Query(value = "select * from ResidenceDepartment where   accommodation='yes' and residence is null" +
+            " and blocks is null order by id desc limit :limit", nativeQuery = true)
+    List<ResidenceDepartment> getLastLimitStudents(long limit);
     @Transactional
     @Modifying
-    @Query(value = "update  ResidenceDepartment set residence=:residenceName,blocks=:blocks, accommodation=:accommodationStatus where id=:Id",
-            nativeQuery = true)
-    void placeStudent(@Param("Id") long Id, @Param("residenceName") String residenceName,@Param("blocks") String blocks,
+    @Query(value = "update  ResidenceDepartment set residenceId=:residenceId, residence=:residenceName,blocks=:blocks," +
+            " accommodation=:accommodationStatus where id=:Id", nativeQuery = true)
+    void placeStudent(@Param("Id") long Id, Long residenceId, @Param("residenceName") String residenceName, @Param("blocks") String blocks,
                       @Param("accommodationStatus") String accommodationStatus);
     @Query(value = "select ResidenceDepartment.studentId from ResidenceDepartment where residence=:residence",
             nativeQuery = true)
     List<Long> getStudentAtResidence(@Param("residence") String residence);
+    @Query(value = "select Residence, blocks from ResidenceDepartment " +
+            "where ResidenceDepartment.studentId=:studentNumber",nativeQuery = true)
+    String getStudentId(long studentNumber);
 }

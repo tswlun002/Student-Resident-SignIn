@@ -3,12 +3,13 @@ import com.application.server.data.Residence;
 import com.application.server.data.ResidentStudent;
 import com.application.server.repository.ResidentStudentRepository;
 import com.application.student.data.Student;
-import com.application.student.repostory.StudentRepository;
+import com.application.student.model.StudentService;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.stream.IntStream;
@@ -22,17 +23,16 @@ public  class ResidentStudentService {
     @Autowired
     private ResidenceService residenceService;
     @Autowired
-    private StudentRepository studentRepository;
+    private StudentService studentService;
     @Autowired
     private  ResidentDepartmentService departmentService;
 
     /***
      * Get Residence details and store them
      */
-    @PostConstruct
-    public  void fillResidentFeature(){
-        List<Residence>residences  =residenceService.getAllResidence();
 
+    public  void fillResidentFeature(String name){
+        List<Residence>residences  =residenceService.getAllResidence(name);
         residences.forEach(
                 residence-> {                                       // block
 
@@ -48,14 +48,13 @@ public  class ResidentStudentService {
 
                                                             ResidentStudent residentStudent = ResidentStudent.builder().residence(residence).flat((floor * 100 + flat) + "").
                                                             floor(floor).room(getRoom(room)).build();
-
-                                                            repository.save(residentStudent);
-
+                                                            boolean notExists =repository.getBy(residence.getBlocks(),floor,(floor * 100 + flat) + "",getRoom(room))==null;
+                                                            if(notExists) repository.save(residentStudent);
                                                         }catch (RuntimeException e){
-                                                            throw  new RuntimeException("Block %s, floor %d, flat %d, room %s , "+residence+", "+ floor+", "+(floor*100+flat)+", "+getRoom(room));
+                                                            throw  new RuntimeException(residence.getResidenceName()+" "+residence.getBlocks()+", "+ floor+", "+(floor*100+flat)+", "+getRoom(room)+"\n"+e.toString());
                                                         }
                                                         finally {
-                                                            System.out.printf("Block %s, floor %d, flat %d, room %s\n",residence, floor, (floor*100+flat),getRoom(room));
+                                                            System.out.printf("Block %s, floor %d, flat %d, room %s\n",residence.getBlocks(), floor, (floor*100+flat),getRoom(room));
                                                         }
                                                     }
                                              );
@@ -92,26 +91,39 @@ public  class ResidentStudentService {
 
     /**
      * Places student(s) available rooms
+     * Student is checked if has been placed to room already
+     * If student has been placed to room, then its placed to available room
      * @return  true if student(s) is placed else false
      */
     public  boolean placeStudentRoom(String residence){
         List<ResidentStudent>roomsAvailable  = availableRoom();
         List<Student> students = departmentService.studentsPlacedAt(residence);
-
         boolean placed = false;
         for(int index=0 ; index<roomsAvailable.size(); index++){
                     if(index<students.size()){
                         ResidentStudent room  = roomsAvailable.get(index);
                         Student student = students.get(index);
-                       repository.placeStudent(student.getStudentNumber(), student.getFullName(),
-                               room.getId(), room.getResidence().getResidenceName(),room.getResidence().getBlocks(),
-                               room.getFlat(),room.getRoom());
-                       placed=true;
+                        if(! isPlacedAtRoom(student)) {
+                            repository.placeStudent(student.getStudentNumber(), student.getFullName(),
+                                    room.getId(), room.getResidence().getResidenceName(), room.getResidence().getBlocks(),
+                                    room.getFlat(), room.getRoom());
+                            placed = true;
+                        }
                     }
                     else break;
         }
 
         return placed;
+    }
+
+    /**
+     * Check if the student is not already allocated or placed to room at the residence
+     * Student has no room if we get null when is being retrieved from database
+     * @param student  - student is being checked if the student has room
+     * @return false if the has been placed already else  true
+     */
+    private boolean isPlacedAtRoom(Student student) {
+        return  repository.checkStudentHasRoom(student.getStudentNumber(), student.getFullName()) !=null;
     }
 
 

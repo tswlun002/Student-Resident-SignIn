@@ -1,87 +1,116 @@
 package com.application.server.model;
-
+import com.application.server.data.Address;
 import com.application.server.data.Residence;
 import com.application.server.repository.ResidenceRepository;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Service;
-import javax.annotation.PostConstruct;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
-import java.util.stream.IntStream;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @Service
 public class ResidenceService {
-    private String[] blocks =    {"A",  "B", "C", "D", "E", "F", "G"};
-    private int [] numberFloors ={  6,   6,   6,   6,   3,   3,   3};
-    private int [] numberFlatsFloor ={8,  8,   8,   8,   8,   8,   8};
-    private String[] rooms ={"A","B","C","D"};
 
-    private  int capacity=240;
+    @Autowired
+    private  AddressService addressService;
     @Autowired
     private ResidenceRepository repository;
-    @PostConstruct
-    public void saveResidenceInfo(){
+    @Autowired
+    private  ResidenceRulesService rulesService;
 
-        IntStream.range(0, blocks.length).forEach(
-            index-> {
-                Residence residence = Residence.builder().residenceName("Forest Hill")
-                        .blocks(blocks[index]).numberFlats(numberFlatsFloor[index]).numberRoom(4).
-                        numberFloors(numberFloors[index]).capacity(capacity).build();
-                repository.save(residence);
-            });
+
+    /**
+     * Save residence into database
+     * @param residence - residence to save into database
+     * @return true if successfully saved residence else false
+     */
+    public boolean saveResidenceInfo(Residence residence){
+          boolean saved= false;
+        if ( !isExists(residence.getResidenceName(), residence.getBlocks())){
+                    repository.save(residence);
+                    saved=true;
+        }
+        return saved;
+    }
+
+    /**
+     * Update address of the residence.
+     * @param residence - updated residence (residence with new properties)
+     * @return - true if successfully updated otherwise false
+     */
+    @Transactional
+    @Modifying
+    public  boolean updateResidenceAddress(Residence residence){
+        boolean updated=false;
+        Residence residence1 = repository.getResidence(residence.getResidenceName(),residence.getBlocks());
+        if(residence1 != null){
+            Address address =  residence.getAddress();
+            residence1.getAddress().setStreetNumber(address.getStreetNumber());
+            residence1.getAddress().setStreetName(address.getStreetName());
+            residence1.getAddress().setSuburbs(address.getSuburbs());
+            residence1.getAddress().setCity(address.getCity());
+            residence1.getAddress().setPostcode(address.getPostcode());
+            updated= addressService.updateAddress(residence1.getAddress());
+        }
+        return updated;
+    }
+
+
+    /**
+     * Delete  residence including its properties address and rules  associated with residence
+     * @param residence - residence to delete
+     * @return - true if successfully delete residence else false .
+     */
+    public  boolean removeResidence(Residence residence) {
+        boolean removed = false;
+        residence = repository.getResidence(residence.getResidenceName(),residence.getBlocks());
+
+      if ( residence!=null){
+            try {
+                repository.deleteById(residence.getId());
+                addressService.removeAddress(residence.getAddress().getId());
+                rulesService.removeRules(residence.getResidenceRules().getId());
+                removed=true;
+            }catch (Exception exception){
+                return false;
+            }
+
+        }
+        return  removed;
+    }
+
+    /**
+     *  check if residence exists  given its name and block
+     * @param name - block of residence
+     * @param block - block of the residence
+     * @return true if exist else false
+     */
+    public  boolean isExists(String name, String block){
+        return repository.getResidence(name,block)!=null;
     }
 
     /**
      * Get residence data  features
      * @return list of residence
      */
-    public List<Residence>  getAllResidence(){
-        return  repository.getResidenceForestHill("Forest Hill");
+    public List<Residence>  getAllResidence(String name){
+        return  repository.getResidenceForestHill(name);
     }
 
-
-    public String[] getBlocks() {
-        return blocks;
-    }
-
-    public void setBlocks(String[] blocks) {
-        this.blocks = blocks;
-    }
-
-    public int[] getNumberFloors() {
-        return numberFloors;
-    }
-
-    public void setNumberFloors(int[] numberFloors) {
-        this.numberFloors = numberFloors;
-    }
-
-    public int[] getNumberFlatsFloor() {
-        return numberFlatsFloor;
-    }
-
-    public void setNumberFlatsFloor(int[] numberFlatsFloor) {
-        this.numberFlatsFloor = numberFlatsFloor;
-    }
-
-    public String[] getRooms() {
-        return rooms;
-    }
-
-    public void setRooms(String[] rooms) {
-        this.rooms = rooms;
-    }
-
-    public int getCapacity() {
-        return capacity;
-    }
-
-    public void setCapacity(int capacity) {
-        this.capacity = capacity;
+    /**
+     * Get residence  given residence name and block
+     * @param name - residence name use to get residence
+     * @param block - block of the residence
+     * @return residence  of given block and name
+     */
+    public Residence getResidence(String name, String block) {
+        return repository.getResidence(name,block);
     }
 
 

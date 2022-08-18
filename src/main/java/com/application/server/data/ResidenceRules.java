@@ -24,16 +24,10 @@ public class ResidenceRules {
     @NonNull
     @Column(name = "signingInTime", nullable = false)
     private LocalTime startSigningTime;
-    @Column(name = "signingOutTime", nullable = true)
+    @Column(name = "signingOutTime")
     private  LocalTime endSigningTime;
     @Column(name = "maximumVisitors",nullable = false)
     private  int numberVisitor;
-    @ManyToOne
-    @JoinColumns({
-            @JoinColumn(name = "residence", referencedColumnName = "residenceName"),
-            @JoinColumn(name = "blocks", referencedColumnName = "blocks")
-    })
-    private Residence residence;
 
 
     @Override
@@ -41,11 +35,7 @@ public class ResidenceRules {
         if (this == o) return true;
         if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
         ResidenceRules that = (ResidenceRules) o;
-        return id != null && Objects.equals(id, that.id) &&
-                residence.residenceName !=null &&
-                Objects.equals(residence.getResidenceName(),that.residence.getResidenceName()) &&
-                residence.getBlocks() !=null &&
-                Objects.equals(residence.getBlocks(),that.residence.getBlocks());
+        return id != null && Objects.equals(id, that.id);
     }
 
     @Override

@@ -1,6 +1,5 @@
 package com.application.server.data;
 import com.application.student.data.Student;
-import com.application.register.data.RegisterEntity;
 import lombok.*;
 import org.hibernate.Hibernate;
 import javax.persistence.*;
@@ -24,6 +23,7 @@ public class ResidentStudent {
     private  String room;
     @ManyToOne
     @JoinColumns({
+            @JoinColumn(name = "residenceId", referencedColumnName = "id"),
             @JoinColumn(name = "blocks",referencedColumnName = "blocks"),
             @JoinColumn(name = "residence",referencedColumnName = "residenceName")
     })
@@ -35,8 +35,6 @@ public class ResidentStudent {
             @JoinColumn(name="studentFullname", referencedColumnName="fullname")
     })
     private Student student;
-    /*@OneToOne(mappedBy = "resident")
-    RegisterEntity register;*/
 
     @Override
     public boolean equals(Object o) {

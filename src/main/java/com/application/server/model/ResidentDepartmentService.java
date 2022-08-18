@@ -17,14 +17,11 @@ import java.util.List;
 @NoArgsConstructor
 @Service
 public class ResidentDepartmentService {
-    @Autowired
-    private ResidenceDepartmentRepository residenceDepartmentRepository;
+    @Autowired private ResidenceDepartmentRepository residenceDepartmentRepository;
     @Autowired private StudentService studentService;
 
-    @Autowired
-    ResidenceService residenceService;
-    @Autowired
-    private  ResidentStudentService residentStudentService;
+    @Autowired private ResidenceService residenceService;
+    @Autowired private  ResidentStudentService residentStudentService;
     private List<Student> students;
     private String accommodation_status;
     private List<ResidentStudent> resident;
@@ -45,20 +42,25 @@ public class ResidentDepartmentService {
                 }
         );
     }
-
+    protected   List<ResidenceDepartment>studentList(int limit){
+        return residenceDepartmentRepository.getFirstLimitStudents(limit);
+    }
+    protected List<ResidentStudent>roomsAvailable(){
+       return residentStudentService.availableRoom();
+    }
     /**
      * Place student at residence
      */
-    public  boolean  placeStudentsResidence(){
-        List<ResidenceDepartment>studentList = residenceDepartmentRepository.getStudentWithNoRes(1000);
-        List<ResidentStudent>roomsAvailable  = residentStudentService.availableRoom();
+    public  boolean  placeStudentsResidence(int limit){
+        List<ResidenceDepartment>departments = studentList(limit);
+        List<ResidentStudent>roomsAvailable  = roomsAvailable();
         boolean placed =false;
         try {
             for (int index = 0; index < roomsAvailable.size(); index++) {
-                if (index < studentList.size()) {
-                    ResidenceDepartment department = studentList.get(index);
+                if (index < departments.size()) {
+                    ResidenceDepartment department = departments.get(index);
                     Residence residence = roomsAvailable.get(index).getResidence();
-                    residenceDepartmentRepository.placeStudent(department.getId(), residence.getResidenceName(),
+                    residenceDepartmentRepository.placeStudent(department.getId(),residence.getId(), residence.getResidenceName(),
                             residence.getBlocks(), "yes");
                     placed=true;
                 } else break;
@@ -70,17 +72,11 @@ public class ResidentDepartmentService {
 
     }
 
-    /**
-     * Save student
-     * @param studentService - student service object get student to be saved
-     */
-    public  void saveStudent(StudentService studentService){
-        residenceDepartmentRepository.save(ResidenceDepartment.builder().students(studentService.getStudent()).build());
-    }
+
 
     /**
      * All Student placed at forest hill by residence department
-     * @return list of student
+     * @return list of student reside at Forest Hill residence
      */
     protected  List<Student> studentsPlacedAt(String residence){
         List<Long> studentId= residenceDepartmentRepository.getStudentAtResidence(residence);
@@ -93,7 +89,40 @@ public class ResidentDepartmentService {
         return studentList;
     }
 
-    public void setStudents(List<Student> students) {
+    /**
+     * Check if the student stays at residence
+     * @param student - student,the function check if it has a residence
+     * @param  residenceName - name of residence student claim to stay at
+     * @return true if the student has residence else false
+     */
+    public  boolean checkResidenceStatus(Student student, String residenceName){
+       return residenceDepartmentRepository.getStudentAtResidence(residenceName).stream().anyMatch(
+                studentId->studentId==student.getStudentNumber()
+        );
+    }
+
+    /**
+     * Save student
+     * @param studentService - student service object get student to be saved
+     */
+    public  void saveStudent(StudentService studentService){
+        residenceDepartmentRepository.save(ResidenceDepartment.builder().students(studentService.getStudent()).build());
+    }
+
+    /**
+     * helper method to get residence of the student
+     * @param student - student used to find residence
+     * @return residence of the student if found else return null
+     */
+    public Residence getResidenceStudent(Student student) {
+        String stringDetails = residenceDepartmentRepository.getStudentId(student.getStudentNumber());
+        if(stringDetails==null) return  null;
+
+        String[] residenceDetails = stringDetails.split(",");
+        return  residenceService.getResidence(residenceDetails[0], residenceDetails[1]);
+    }
+
+ /*   public void setStudents(List<Student> students) {
         this.students = students;
     }
 
@@ -115,6 +144,6 @@ public class ResidentDepartmentService {
 
     public List<ResidentStudent> getResident() {
         return resident;
-    }
+    }*/
 
 }

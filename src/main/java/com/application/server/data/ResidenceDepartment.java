@@ -16,11 +16,10 @@ import java.util.Objects;
 @Table(name = "ResidenceDepartment")
 public class ResidenceDepartment implements Serializable {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "schoolSeq")
-    @SequenceGenerator(name = "schoolSeq")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id", nullable = false)
-    private Integer id;
-    public Integer getId() {
+    private Long id;
+    public Long getId() {
         return id;
     }
     @ManyToOne
@@ -33,13 +32,14 @@ public class ResidenceDepartment implements Serializable {
     private String accommodation;
     @ManyToOne
     @JoinColumns({
+            @JoinColumn(name = "residenceId", referencedColumnName = "id"),
             @JoinColumn(name = "blocks",referencedColumnName = "blocks"),
             @JoinColumn(name = "residence",referencedColumnName = "residenceName")
     })
     private Residence residence;
 
 
-    public void setId(Integer id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
