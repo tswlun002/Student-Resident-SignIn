@@ -1,4 +1,4 @@
-package com.visitor;
+package com.application.visitor.model;
 
 
 public class Visitor{

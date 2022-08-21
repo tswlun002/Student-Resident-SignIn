@@ -1,16 +1,16 @@
-package com.visitor;
+package com.application.visitor.model;
 
 import org.springframework.stereotype.Service;
 
 @Service
 
-public class Relative extends  Visitor implements OnShowIdentityCard{
+public class Relative extends  Visitor {
 
     private long idNumber;
-    private  Address address;
+    private Address address;
 
-    private  String fullName;
-    private  String contact;
+    private String fullName;
+    private String contact;
 
     @Override
     public String getFullName() {
@@ -32,7 +32,7 @@ public class Relative extends  Visitor implements OnShowIdentityCard{
         this.contact = contact;
     }
 
-    public Relative(String fullName, String contact , long idNumber, Address address) {
+    public Relative(String fullName, String contact, long idNumber, Address address) {
         super(fullName, contact);
         setFullName(fullName);
         setContact(contact);
@@ -76,12 +76,6 @@ public class Relative extends  Visitor implements OnShowIdentityCard{
                 ", address='" + address + '\'' +
                 '}';
     }
-
-    /**
-     * @return  details of the identity card  of relative
-     */
-    @Override
-    public String showIdentityCard() {
-         return  toString();
-    }
 }
+
+

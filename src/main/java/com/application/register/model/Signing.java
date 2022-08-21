@@ -1,4 +1,4 @@
-package com.register;
+package com.application.register.model;
 import java.sql.Time;
 import java.util.Date;
 public class Signing {
@@ -13,11 +13,11 @@ public class Signing {
 
     /***
      * Construct initialise fields
-     * @param date - date  host sign in visitor
-     * @param signInTime - time host sign visitor
-     * @param hostId - host id ( can be student number)
+     * @param date - date  student sign in visitor
+     * @param signInTime - time student sign visitor
+     * @param hostId - student id ( can be student number)
      * @param visitorId - Visitor id ( id for relative or student number for other schoolmate)
-     * @param roomNumber -  Host room number
+     * @param roomNumber -  StudentService room number
      * @param status - sign in status ( signedIn or signedOut)
      */
     public Signing(Date date, Time signInTime, long hostId, long visitorId, String roomNumber, String status) {
@@ -104,7 +104,7 @@ public class Signing {
                 "date=" + date +
                 ", signInTime=" + signInTime +
                 ", signOutTime=" + signOutTime +
-                ", hostId=" + hostId +
+                ", studentId=" + hostId +
                 ", visitorId=" + visitorId +
                 ", roomNumber='" + roomNumber + '\'' +
                 ", status='" + status + '\'' +

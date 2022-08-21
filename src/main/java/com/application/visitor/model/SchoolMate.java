@@ -1,4 +1,4 @@
-package com.visitor;
+package com.application.visitor.model;
 
 import com.application.OnShowStudentCard;
 import org.springframework.stereotype.Service;
@@ -7,12 +7,10 @@ import org.springframework.stereotype.Service;
 import java.util.Objects;
 
 @Service
-
-public class SchoolMate extends Visitor implements  OnShowIdentityCard, OnShowStudentCard {
+public class SchoolMate extends Visitor {
     private long studentNumber;
-    private  String resident;
-    
     private  String fullName;
+    private  String resident;
     private  String contact;
 
     public SchoolMate() {
@@ -102,19 +100,4 @@ public class SchoolMate extends Visitor implements  OnShowIdentityCard, OnShowSt
                 '}';
     }
 
-    /**
-     *@return  details of the identity card  of relative
-     */
-    @Override
-    public String showIdentityCard() {
-        return showStudentCard();
-    }
-
-    /**
-     * @return details of the Student card of schoolmate
-     */
-    @Override
-    public String showStudentCard() {
-        return toString();
-    }
 }

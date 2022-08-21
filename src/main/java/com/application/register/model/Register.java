@@ -1,10 +1,10 @@
-package com.register;
-import com.host.Host;
-import com.server.OnHostNotSignedOut;
-import com.server.Server;
-import com.visitor.Relative;
-import com.visitor.SchoolMate;
-import com.visitor.Visitor;
+package com.application.register.model;
+import com.application.student.model.StudentService;
+import com.application.server.OnHostNotSignedOut;
+import com.application.server.Server;
+import com.application.visitor.model.Relative;
+import com.application.visitor.model.SchoolMate;
+import com.application.visitor.model.Visitor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -39,21 +39,21 @@ public class Register implements OnHostNotSignedOut, OnSigningOut{
 
     /***
      * Store signed item
-     * First check if host is authorized to sign in and check if the visitor is valid
+     * First check if studentService is authorized to sign in and check if the visitor is valid
      * If all checks are true, sign is authorized and sign item is stored
-     * @param host - host object signed visitor
+     * @param studentService - studentService object signed visitor
      * @param visitor - visitor object  being signed
      * @param newItem - signed item
      * @return true visitor successful not already signed else false
      * @throws Exception -  authorization fails
      */
-    public  boolean  setSignInItem(Host host, Visitor visitor, Signing newItem) throws Exception {
+    public  boolean  setSignInItem(StudentService studentService, Visitor visitor, Signing newItem) throws Exception {
          server.getSignedItems(signInItems);
         boolean authenticated = false;
         if(!alreadySignedVisitor(newItem)) {
              authenticated =  (visitor instanceof Relative) ?
-                     server.authenticateAndAuthorizationRelative(host, (Relative) visitor) :
-                     server.authenticateAndAuthorizationSchoolmate(host, (SchoolMate) visitor);
+                     server.authenticateAndAuthorizationRelative(studentService, (Relative) visitor) :
+                     server.authenticateAndAuthorizationSchoolmate(studentService, (SchoolMate) visitor);
            if(authenticated)signInItems.add(newItem) ;
            else{
                try {
@@ -102,7 +102,7 @@ public class Register implements OnHostNotSignedOut, OnSigningOut{
 
 
     /**
-     * @param signInItems - list of host not yet signed out after 12:00 am
+     * @param signInItems - list of student not yet signed out after 12:00 am
      */
     @Override
     public  void showNotSignedOutVisitors(ArrayList<Signing> signInItems) {
@@ -123,8 +123,8 @@ public class Register implements OnHostNotSignedOut, OnSigningOut{
 
     /**
      * Allow signing out of visitor
-     * Check if its signing time , verify host id and visitor id are register
-     * @param hostId  - id of the host
+     * Check if its signing time , verify student id and visitor id are register
+     * @param hostId  - id of the student
      * @param visitorId - visitor id
      * @param date - date of signing in
      * @throws  - exception when signing out after signing time has passed

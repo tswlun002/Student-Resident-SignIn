@@ -1,4 +1,4 @@
-package com.visitor;
+package com.application.visitor.model;
 
 /**
  * Show identity card of the visitor

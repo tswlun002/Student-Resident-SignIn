@@ -1,14 +1,17 @@
 package com.application;
-import com.register.SignVisitor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 @SpringBootApplication
 public class MainActivity {
-	public static void main(String[] args) throws Throwable {
+	@Autowired
+	public static void main(String[] args) {
 		 ApplicationContext context = SpringApplication.run(MainActivity.class, args);
-		SignVisitor signVisitor = context.getBean(SignVisitor.class);
+		//= new ServerController();
+
 
 	}
+
 
 }

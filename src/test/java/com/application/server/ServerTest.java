@@ -1,9 +1,10 @@
-package com.server;
-import com.host.Host;
-import com.register.Signing;
-import com.server.Dao.ResidentDB;
-import com.server.Dao.UCTDB;
-import com.visitor.SchoolMate;
+package com.application.server;
+import com.application.server.model.ResidentStudentService;
+import com.application.student.model.StudentService;
+import com.application.register.model.Signing;
+import com.application.server.Dao.ResidentDB;
+import com.application.server.Dao.School;
+import com.application.visitor.model.SchoolMate;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvFileSource;
@@ -21,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @RunWith(SpringRunner.class)
-@SpringBootTest( classes = {ResidentSignRules.class,Resident.class,UCTDB.class,ResidentDB.class,
+@SpringBootTest( classes = {ResidentSignRules.class, ResidentStudentService.class, School.class,ResidentDB.class,
         OnSigningPeriod.class})
 class ServerTest {
 
@@ -31,9 +32,9 @@ class ServerTest {
     @Autowired
     private ResidentDB residentDB;
     @Autowired
-    private UCTDB uctDatabase;
+    private School uctDatabase;
     @Autowired
-    private Resident resident;
+    private ResidentStudentService residentStudentService;
 
     private List<Signing> signingList;
 
@@ -42,7 +43,7 @@ class ServerTest {
 
     @BeforeAll
     void setUp() {
-        server  = new Server(resident,residentSignRules,residentDB,uctDatabase);
+        server  = new Server(residentStudentService,residentSignRules,residentDB,uctDatabase);
         signingList = new ArrayList<>();
     }
 
@@ -52,22 +53,22 @@ class ServerTest {
 
 
     @ParameterizedTest
-    @DisplayName("Test if able to validate  correct host")
+    @DisplayName("Test if able to validate  correct student")
    @CsvFileSource(resources = "/CorrectHosts.csv")
     void  validateHostWithValidHosts(long id, String fullName, String contact, String roomNumber)
             throws Exception {
-        Host host1 = new Host(id, fullName,contact, roomNumber);
-        Assertions.assertTrue(server.validateHost(host1));
+        StudentService studentService1 = StudentService.builder().studentNumber(id).fullName(fullName).contact(contact).accommodation(roomNumber).build();
+        Assertions.assertTrue(server.validateHost(studentService1));
     }
 
     @ParameterizedTest
-    @DisplayName("Throw exception for invalid host")
+    @DisplayName("Throw exception for invalid student")
     @CsvFileSource(resources = "/incorrectHosts.csv")
     void  validateHostWithInvalidHosts(long id, String fullName, String contact, String roomNumber) {
-        Host host1 = new Host(id, fullName,contact, roomNumber);
+        StudentService studentService1 = StudentService.builder().studentNumber(id).fullName(fullName).contact(contact).accommodation(roomNumber).build();
         Assertions.assertEquals(Assertions.assertThrows(Exception.class, () ->
-                server.validateHost(host1)).getMessage(),
-                "Host " + host1.getFullName() + " is not found in Resident database");
+                server.validateHost(studentService1)).getMessage(),
+                "StudentService " + studentService1.getFullName() + " is not found in ResidentStudentService database");
     }
     @ParameterizedTest
     @DisplayName("Tes for valid schoolmate visitors")
@@ -112,7 +113,7 @@ class ServerTest {
         server.getSignedItems(signingList);
         Assertions.assertTrue( !server.getSignInItems().isEmpty() && server.getSignInItems().size()<=5);
     }
-    @DisplayName("Test host to sign when  visitor still less than 3")
+    @DisplayName("Test student to sign when  visitor still less than 3")
     @ParameterizedTest
     @CsvSource(value = {"123:984736:c601c:sign in","456:1045:B605B: sign in","456:11245:B605B: sign in",
             "456:14645:B605B: sign in", "367:107565:C505C: sign in"},delimiter = ':')
@@ -120,7 +121,7 @@ class ServerTest {
         Date date = new Date(System.currentTimeMillis());
         Assertions.assertTrue(server.countNumberSignIn(hostId, date));
     }
-    @DisplayName("Test  host to sign   visitor still less than 3 visitors signed")
+    @DisplayName("Test  student to sign   visitor still less than 3 visitors signed")
     @ParameterizedTest
     @CsvSource(value = {"123:984736:c601c:sign in","456:1045:B605B: sign in","456:11245:B605B: sign in",
             "456:14645:B605B: sign in", "367:107565:C505C: sign in"},delimiter = ':')
@@ -131,7 +132,7 @@ class ServerTest {
         server.getSignedItems(signingList);
         Assertions.assertTrue(server.getSignInItems().size()<=10 && server.getSignInItems().size()>=5);
     }
-    @DisplayName("Test host to sign when  visitor still more than 3")
+    @DisplayName("Test student to sign when  visitor still more than 3")
     @ParameterizedTest
     @CsvSource(value = {"123:984736:c601c:sign in","456:1045:B605B: sign in","456:11245:B605B: sign in",
             "456:14645:B605B: sign in", "367:107565:C505C: sign in"},delimiter = ':')
@@ -144,16 +145,16 @@ class ServerTest {
         Assertions.assertEquals(
                 Assertions.assertThrows(Exception.class,()->
                         server.countNumberSignIn(hostId, date)).getMessage(),
-                "Host  can't sign more than  3 visitor.");
+                "StudentService  can't sign more than  3 visitor.");
     }
-    @DisplayName("Host signs within the period of signing ")
+    @DisplayName("StudentService signs within the period of signing ")
     @Test
     void HostWithInSigningTime() throws Exception {
         LocalTime now  = LocalTime.parse("12:00:00",DateTimeFormatter.ISO_LOCAL_TIME);
         Assertions.assertTrue(server.withInSigningTime(now));
     }
 
-    @DisplayName("Host can't sign because after allowed time to sign in ")
+    @DisplayName("StudentService can't sign because after allowed time to sign in ")
     @Test
     void HostAfterSigningTimeElapsed() {
 
