@@ -4,7 +4,9 @@ import lombok.*;
 import org.hibernate.Hibernate;
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 @Builder
 @AllArgsConstructor
@@ -22,22 +24,29 @@ public class ResidenceDepartment implements Serializable {
     public Long getId() {
         return id;
     }
-    @ManyToOne
-    @JoinColumns({
-            @JoinColumn(name="studentId", referencedColumnName="studentNumber"),
-            @JoinColumn(name="studentFullname", referencedColumnName="fullname")
-    })
-    private Student students;
     @Column(nullable = false)
     private String accommodation;
-    @ManyToOne
-    @JoinColumns({
-            @JoinColumn(name = "residenceId", referencedColumnName = "id"),
-            @JoinColumn(name = "blocks",referencedColumnName = "blocks"),
-            @JoinColumn(name = "residence",referencedColumnName = "residenceName")
-    })
-    private Residence residence;
+    @OneToMany
+    @JoinTable(
+            name = "AccommodatedStudents",
+            joinColumns = {@JoinColumn(name="ResidenceDepartId")},
+            inverseJoinColumns =  {@JoinColumn(name = "studentId",referencedColumnName = "studentNumber"),
+                    @JoinColumn(name ="studentName", referencedColumnName = "fullname")}
 
+
+    )
+    private Set<Student> students = new HashSet<>();
+    @OneToMany
+    @JoinTable(
+            name = "SchoolResidences",
+            joinColumns =  @JoinColumn(name = "ResidenceDepartId"),
+            inverseJoinColumns = {@JoinColumn(name = "residenceId", referencedColumnName = "id"),
+                                  @JoinColumn(name = "residenceName", referencedColumnName = "residenceName"),
+                                  @JoinColumn(name = "blocks",referencedColumnName = "blocks")
+            }
+
+    )
+    private Set<Residence> residence = new HashSet<>();
 
     public void setId(Long id) {
         this.id = id;

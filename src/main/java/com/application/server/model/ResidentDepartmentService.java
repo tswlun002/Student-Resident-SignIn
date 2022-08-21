@@ -10,8 +10,11 @@ import lombok.Builder;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import java.util.ArrayList;
-import java.util.List;
+import org.springframework.util.StringUtils;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -19,7 +22,6 @@ import java.util.List;
 public class ResidentDepartmentService {
     @Autowired private ResidenceDepartmentRepository residenceDepartmentRepository;
     @Autowired private StudentService studentService;
-
     @Autowired private ResidenceService residenceService;
     @Autowired private  ResidentStudentService residentStudentService;
     private List<Student> students;
@@ -28,20 +30,100 @@ public class ResidentDepartmentService {
 
     /**
      * Save all registered students
+     * First  fetch all students that have residence
+     * Group them according to their residence
+     * Then save these students
+     * @return hashmap of residence their set of students
      */
-    public  void saveAllStudent(){
-        studentService.getAllStudent().forEach(
+    public HashMap<String, Set<Student>> saveStudentWithResidences(){
+        Set<Student> studentSet= getStudentsNotPlaced();
+        HashMap<String ,Set<Student>>  setHashMap = new HashMap<>();
+        categoriseStudentByRes(setHashMap, studentSet);
+        System.out.println(studentSet.size());
+        setHashMap.forEach(
+               (key, value)->{
+
+                   String []residenceInfo = key.split(",");
+                   String name  = StringUtils.capitalize(residenceInfo[0].trim());
+                   String block  = (residenceInfo.length==2)?StringUtils.capitalize(residenceInfo[1].trim()):name;
+                   if(name.trim().equalsIgnoreCase("Forest Hill")) {
+                       Residence residence = getResidence(name, block);
+                       ResidenceDepartment residenceDepartment = ResidenceDepartment.builder().students(value)
+                               .residence(Set.of(residence)).accommodation(name+","+block).build();
+                       System.out.println(key);
+                      residenceDepartmentRepository.save(residenceDepartment);
+                   }
+               }
+       );
+        return setHashMap;
+
+
+    }
+
+    /**
+     * Get residence from database with name and block
+     * @param name - name of the residence
+     * @param block - block of the residence
+     * @return residence of the given name and block
+     */
+    private Residence getResidence(String name, String block){
+        return  residenceService.getResidence(name.trim(), block.trim());
+    }
+
+    /**
+     * Group students according to their residence/accommodation  status .
+     * Accommodation status map to set of students belongs to it
+     * @param setHashMap - hashmap to categorise/group these students
+     * @param studentSet - set of all student to group or map
+     * @return - hashmap of accommodation to set of students
+     */
+    private  HashMap<String, Set<Student>> categoriseStudentByRes(HashMap<String, Set<Student>> setHashMap, Set<Student> studentSet){
+        studentSet.forEach(
                 student -> {
-                    String status  = student.getAccommodation()==null?"no":student.getAccommodation();
-                    List<ResidenceDepartment> residenceDepartments = residenceDepartmentRepository.findAll();
-                    if(residenceDepartments.stream().noneMatch(
-                            residenceDepartment ->
-                                    residenceDepartment.getStudents().getStudentNumber()==student.getStudentNumber()
-                    ))
-                         residenceDepartmentRepository.save(ResidenceDepartment.builder().accommodation(status).students(student).build());
+                    String []residenceInfo = student.getAccommodation().split(",");
+                    String name  = residenceInfo[0].trim();
+                    String block  = (residenceInfo.length==2)?residenceInfo[1].trim():name;
+                    String key =name.toLowerCase()+","+block.toLowerCase();
+                    if(setHashMap.isEmpty()){
+                        Set<Student> studentSet1 = new HashSet<>();
+                        studentSet1.add(student);
+                        setHashMap.put(key,studentSet1);
+                    }
+                    else if(! setHashMap.containsKey(key)){
+                        Set<Student> studentSet1 = new HashSet<>();
+                        studentSet1.add(student);
+                        setHashMap.put(key,studentSet1);
+                    }
+                    else{
+                        setHashMap.get(key).add(student);
+                    }
                 }
         );
+        return  setHashMap;
     }
+
+    /**
+     * Filter out all students that not yet stored at department residence
+     * Get students not yet placed.
+     * Then check if they are not placed at any residence
+     * @return set of students that not yet placed
+     */
+    private  Set<Student> getStudentsNotPlaced(){
+        return studentService.getStudentsWithResOffer().stream().filter(
+                student -> {
+                    List<ResidenceDepartment> residenceDepartments = residenceDepartmentRepository.getDepartment();
+
+                    //check in all residence if student is not placed before
+                    return residenceDepartments.stream().noneMatch(
+                            residenceDepartment -> residenceDepartment.getStudents().stream().noneMatch(
+                                    student1 -> student1.getStudentNumber()==student.getStudentNumber()
+                            )
+                    );
+                    //Node need to add student into set
+                }
+        ).collect(Collectors.toSet());
+    }
+
     protected   List<ResidenceDepartment>studentList(int limit){
         return residenceDepartmentRepository.getFirstLimitStudents(limit);
     }
@@ -106,7 +188,8 @@ public class ResidentDepartmentService {
      * @param studentService - student service object get student to be saved
      */
     public  void saveStudent(StudentService studentService){
-        residenceDepartmentRepository.save(ResidenceDepartment.builder().students(studentService.getStudent()).build());
+        //Note need add Student into set
+        residenceDepartmentRepository.save(ResidenceDepartment.builder().build());
     }
 
     /**
@@ -122,28 +205,6 @@ public class ResidentDepartmentService {
         return  residenceService.getResidence(residenceDetails[0], residenceDetails[1]);
     }
 
- /*   public void setStudents(List<Student> students) {
-        this.students = students;
-    }
 
-    public void setAccommodation_status(String accommodation_status) {
-        this.accommodation_status = accommodation_status;
-    }
-
-    public void setResident(List<ResidentStudent> resident) {
-        this.resident = resident;
-    }
-
-    public List<Student> getStudents() {
-        return students;
-    }
-
-    public String getAccommodation_status() {
-        return accommodation_status;
-    }
-
-    public List<ResidentStudent> getResident() {
-        return resident;
-    }*/
 
 }

@@ -28,4 +28,6 @@ public interface ResidenceDepartmentRepository extends JpaRepository<ResidenceDe
     @Query(value = "select Residence, blocks from ResidenceDepartment " +
             "where ResidenceDepartment.studentId=:studentNumber",nativeQuery = true)
     String getStudentId(long studentNumber);
+   @Query("select d from ResidenceDepartment d join fetch d.students s join fetch d.residence")
+    List<ResidenceDepartment> getDepartment();
 }
