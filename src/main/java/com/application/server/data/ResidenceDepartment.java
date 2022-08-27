@@ -14,7 +14,6 @@ import java.util.Set;
 @Entity
 @Getter
 @Setter
-@ToString
 @Table(name = "ResidenceDepartment")
 public class ResidenceDepartment implements Serializable {
     @Id
@@ -26,7 +25,7 @@ public class ResidenceDepartment implements Serializable {
     }
     @Column(nullable = false)
     private String accommodation;
-    @OneToMany
+    @OneToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "AccommodatedStudents",
             joinColumns = {@JoinColumn(name="ResidenceDepartId")},
@@ -36,7 +35,7 @@ public class ResidenceDepartment implements Serializable {
 
     )
     private Set<Student> students = new HashSet<>();
-    @OneToMany
+    @OneToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "SchoolResidences",
             joinColumns =  @JoinColumn(name = "ResidenceDepartId"),
@@ -63,5 +62,13 @@ public class ResidenceDepartment implements Serializable {
     @Override
     public int hashCode() {
         return getClass().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "ResidenceDepartment{" +
+                "id=" + id +
+                ", accommodation='" + accommodation + '\'' +
+                '}';
     }
 }

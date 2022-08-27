@@ -41,6 +41,14 @@ public class ResidenceService {
     }
 
     /**
+     * Update residence information
+     * @param residence - to be updated
+     */
+    public void updateResidence(Residence residence){
+        repository.save(residence);
+    }
+
+    /**
      * Update address of the residence.
      * @param residence - updated residence (residence with new properties)
      * @return - true if successfully updated otherwise false
@@ -133,6 +141,7 @@ public class ResidenceService {
     public Residence getResidence(String name, String block) {
         return repository.getResidence(name,block);
     }
+
 
 
 }
