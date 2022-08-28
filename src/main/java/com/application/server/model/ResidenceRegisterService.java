@@ -1,7 +1,7 @@
 package com.application.server.model;
 import com.application.server.data.Residence;
-import com.application.server.data.ResidentStudent;
-import com.application.server.repository.ResidentStudentRepository;
+import com.application.server.data.ResidenceRegister;
+import com.application.server.repository.ResidenceRegisterRepository;
 import com.application.student.data.Student;
 import com.application.student.model.StudentService;
 import lombok.AllArgsConstructor;
@@ -15,9 +15,9 @@ import java.util.stream.IntStream;
 @AllArgsConstructor
 @NoArgsConstructor
 @Service
-public  class ResidentStudentService {
+public  class ResidenceRegisterService {
     @Autowired
-    private ResidentStudentRepository repository;
+    private ResidenceRegisterRepository repository;
     @Autowired
     private ResidenceService residenceService;
     @Autowired
@@ -44,10 +44,10 @@ public  class ResidentStudentService {
                                                     room->{
                                                         try {
 
-                                                            ResidentStudent residentStudent = ResidentStudent.builder().residence(residence).flat((floor * 100 + flat) + "").
+                                                            ResidenceRegister residenceRegister = ResidenceRegister.builder().residence(residence).flat((floor * 100 + flat) + "").
                                                             floor(floor).room(getRoom(room)).build();
                                                             boolean notExists =repository.getBy(residence.getBlocks(),floor,(floor * 100 + flat) + "",getRoom(room))==null;
-                                                            if(notExists) repository.save(residentStudent);
+                                                            if(notExists) repository.save(residenceRegister);
                                                         }catch (RuntimeException e){
                                                             throw  new RuntimeException(residence.getResidenceName()+" "+residence.getBlocks()+", "+ floor+", "+(floor*100+flat)+", "+getRoom(room)+"\n"+e.toString());
                                                         }
@@ -83,7 +83,7 @@ public  class ResidentStudentService {
     /**
      * @return list of available room
      */
-    public  List<ResidentStudent> availableRoom(){
+    public  List<ResidenceRegister> availableRoom(){
        return repository.getAllAvailableRooms();
     }
 
@@ -94,12 +94,12 @@ public  class ResidentStudentService {
      * @return  true if student(s) is placed else false
 
     public  boolean placeStudentRoom(String residence){
-        List<ResidentStudent>roomsAvailable  = availableRoom();
+        List<ResidenceRegister>roomsAvailable  = availableRoom();
         List<Student> students = departmentService.studentsPlacedAt(residence);
         boolean placed = false;
         for(int index=0 ; index<roomsAvailable.size(); index++){
                     if(index<students.size()){
-                        ResidentStudent room  = roomsAvailable.get(index);
+                        ResidenceRegister room  = roomsAvailable.get(index);
                         Student student = students.get(index);
                         if(! isPlacedAtRoom(student)) {
                             repository.placeStudent(student.getStudentNumber(), student.getFullName(),
@@ -121,7 +121,7 @@ public  class ResidentStudentService {
      * @return false if the has been placed already else  true
      */
     private boolean isPlacedAtRoom(Student student) {
-        return  repository.checkStudentHasRoom(student.getStudentNumber(), student.getFullName()) !=null;
+        return true;  //repository.checkStudentHasRoom(student.getStudentNumber(), student.getFullName()) !=null;
     }
 
 

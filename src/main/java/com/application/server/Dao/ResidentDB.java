@@ -1,9 +1,9 @@
 package com.application.server.Dao;
-import com.application.server.model.ResidentStudentService;
+import com.application.server.model.ResidenceRegisterService;
 import com.application.student.data.Student;
 import com.application.student.model.StudentService;
 import com.application.student.repostory.StudentRepository;
-import com.application.server.repository.ResidentStudentRepository;
+import com.application.server.repository.ResidenceRegisterRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -13,14 +13,14 @@ import java.util.List;
 @Service
 public class ResidentDB{
     /**
-     * @serialField  studentServiceList  - database of residentStudentService members
+     * @serialField  studentServiceList  - database of residenceRegisterService members
      */
     private final List<StudentService> studentServiceList =new ArrayList<>();
 
     @Autowired(required = true)
-    ResidentStudentRepository repository;
+    ResidenceRegisterRepository repository;
     @Autowired
-    ResidentStudentService residentStudentService;
+    ResidenceRegisterService residenceRegisterService;
     @Autowired
     StudentRepository studentRepository;
 
@@ -38,23 +38,23 @@ public class ResidentDB{
          int [] NumberFlatsFloor ={8,  8,   8,   8,   8,   8,   8};
          String[] rooms ={"A","B","C","D"};
 
-       /* residentStudentService = ResidentStudentService.builder().blocks(blocks).NumberFloors(NumberFloors).NumberFlatsFloor(NumberFlatsFloor)
+       /* residenceRegisterService = ResidenceRegisterService.builder().blocks(blocks).NumberFloors(NumberFloors).NumberFlatsFloor(NumberFlatsFloor)
                 .room(rooms).residentName("Forest Hill").capacity(2500).build();
         int[] floor = {0};
-        Arrays.stream(residentStudentService.getBlocks()).forEach(
+        Arrays.stream(residenceRegisterService.getBlocks()).forEach(
                 block-> {                                       // block
 
-                    IntStream.range(1, residentStudentService.getNumberFloors()[floor[0]]+1).forEach(    // each floor
+                    IntStream.range(1, residenceRegisterService.getNumberFloors()[floor[0]]+1).forEach(    // each floor
                             index -> {
                                 int[] floorFlats = {0};
                                 //flat
-                                IntStream.range(1, residentStudentService.getNumberFlatsFloor()[floorFlats[0]]+1).forEach( //each flat
+                                IntStream.range(1, residenceRegisterService.getNumberFlatsFloor()[floorFlats[0]]+1).forEach( //each flat
                                         flat -> {
                                             // each room
-                                            Arrays.stream(residentStudentService.getRoom()).forEach(
+                                            Arrays.stream(residenceRegisterService.getRoom()).forEach(
                                                     room->{
                                                         try {
-                                                            ResidentStudent resDB = ResidentStudent.builder().name(residentStudentService.getResidentName()).
+                                                            ResidenceRegister resDB = ResidenceRegister.builder().name(residenceRegisterService.getResidentName()).
                                                                     blocks(block).flat((index * 100 + flat) + "").room(room).floor(index).build();
                                                             repository.save(resDB);
                                                         }catch (RuntimeException e){
@@ -78,7 +78,7 @@ public class ResidentDB{
                 }
 
         );*/
-                            //residentStudentService.getNumberFloors()
+                            //residenceRegisterService.getNumberFloors()
     }
 
     public void saveStudents(){
@@ -100,7 +100,7 @@ public class ResidentDB{
             );*/
     }
     /**
-     * @return List of the  members(Hosts) of the residentStudentService
+     * @return List of the  members(Hosts) of the residenceRegisterService
      */
     public List<Student> getHostList() {
         return studentRepository.findAll();

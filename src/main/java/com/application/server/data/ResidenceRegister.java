@@ -3,7 +3,9 @@ import com.application.student.data.Student;
 import lombok.*;
 import org.hibernate.Hibernate;
 import javax.persistence.*;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -12,8 +14,8 @@ import java.util.Objects;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name ="ResidentStudent" )
-public class ResidentStudent {
+@Table(name ="ResidenceRegister" )
+public class ResidenceRegister {
     @Id
     @Column(name = "id", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -29,19 +31,23 @@ public class ResidentStudent {
     })
     private  Residence residence;
 
-    @ManyToOne
-    @JoinColumns({
-            @JoinColumn(name="studentId", referencedColumnName="studentNumber"),
-            @JoinColumn(name="studentFullname", referencedColumnName="fullname")
-    })
-    private Student student;
+    @OneToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "StudentsOfResidence",
+            joinColumns = {@JoinColumn(name="Id")},
+            inverseJoinColumns =  {@JoinColumn(name = "studentId",referencedColumnName = "studentNumber"),
+                    @JoinColumn(name ="studentName", referencedColumnName = "fullname")}
+
+
+    )
+    private Set<Student> students = new HashSet<>();
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
-        ResidentStudent residentStudent = (ResidentStudent) o;
-        return id!=null && Objects.equals(id, residentStudent.id);
+        ResidenceRegister residenceRegister = (ResidenceRegister) o;
+        return id!=null && Objects.equals(id, residenceRegister.id);
     }
 
     @Override

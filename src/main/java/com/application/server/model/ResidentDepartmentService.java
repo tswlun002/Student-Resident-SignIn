@@ -12,6 +12,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+
+import javax.annotation.PostConstruct;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -23,7 +25,7 @@ public class ResidentDepartmentService {
     @Autowired private ResidenceDepartmentRepository residenceDepartmentRepository;
     @Autowired private StudentService studentService;
     @Autowired private ResidenceService residenceService;
-    @Autowired private  ResidentStudentService residentStudentService;
+    @Autowired private ResidenceRegisterService residenceRegisterService;
     private List<Student> students;
     private String accommodation_status;
 
@@ -117,12 +119,11 @@ public class ResidentDepartmentService {
     public ResidenceDepartment addToStudentSet(Student student,Residence residence){
         ResidenceDepartment residenceDepartment= null;
         for(ResidenceDepartment residenceDepartment1 : residenceDepartmentList) {
-                if (residenceDepartment1.getResidence().contains(residence)) {
-                    residenceDepartment1.getStudents().clear();
-                    residenceDepartment1.getStudents().add(student);
-                    residenceDepartment= residenceDepartment1;
-                    break;
-                }
+                residenceDepartment1.getStudents().clear();
+                residenceDepartment1.getStudents().add(student);
+                residenceDepartment = residenceDepartment1;
+
+                break;
         }
         return residenceDepartment;
     }
@@ -200,7 +201,7 @@ public class ResidentDepartmentService {
      * @return List of ResidenceDepartment
      */
     List<ResidenceDepartment> getDepartmentWithResidence(){
-        residenceDepartmentList= residenceDepartmentRepository.getDepartmentWithResidences();
+        residenceDepartmentList= residenceDepartmentRepository.getDepartments();
         return  residenceDepartmentList;
     }
 
@@ -211,7 +212,7 @@ public class ResidentDepartmentService {
     ResidenceDepartment getDepartment(Student student, Residence residence){
 
         ResidenceDepartment residenceDepartment=
-                residenceDepartmentRepository.getDepartmentWithResidences(student.getStudentNumber(),residence.getId(),
+                residenceDepartmentRepository.getDepartments(student.getStudentNumber(),residence.getId(),
                         residence.getResidenceName()+","+residence.getBlocks());
         if(residenceDepartment !=null)return  residenceDepartment;
         else{
@@ -230,7 +231,7 @@ public class ResidentDepartmentService {
      * @return  ResidenceDepartment
      */
     public ResidenceDepartment getDepartmentWithResidence(Long id) {
-        return  residenceDepartmentRepository.getDepartmentWithResidences(id);
+        return  residenceDepartmentRepository.getDepartments(id);
     }
 
 
@@ -285,7 +286,6 @@ public class ResidentDepartmentService {
           {
                  student.setAccommodation(nextResName);
                  studentService.saveStudent(student);
-                 //saveStudentWithResidences();
                  updated=true;
           }
       }catch (Exception e){
@@ -354,6 +354,48 @@ public class ResidentDepartmentService {
    ResidenceDepartment getReferenceById(Long id){
        return residenceDepartmentRepository.getReferenceById(id);
    }
+
+    /**
+     * Remove unregistered students from residence
+     */
+    @PostConstruct
+   public  void removeStudentNotRegistered(){
+       List<Student>registeredStudent  = studentService.getStudents();
+       getDepartmentWithStudents().forEach(
+               studentString->{
+                   String[] studentInfo  = studentString.split(",");
+                   Long studentNo  = Long.parseLong(studentInfo[1].trim());
+                   String name = studentInfo[2];
+                   if(registeredStudent.stream().noneMatch(
+                           student1 -> Objects.equals(student1.getStudentNumber(), studentNo) &&
+                                   student1.getFullName().equalsIgnoreCase(name)
+                   )){
+                       deleteStudent(studentNo,name);
+                   }
+
+               });
+
+   }
+
+    /**
+     * Remove student from residence data
+     * @param studentId - student number of the student to be removed
+     * @param studentName - of the student to be removed
+     */
+   public  void  deleteStudent(Long studentId , String studentName ) {
+       residenceDepartmentRepository.deleteStudent(studentId, studentName);
+   }
+
+
+    /**
+     * Fetch All students that stays at residences
+     * @return  string list of students
+     */
+    List<String> getDepartmentWithStudents(){
+       return residenceDepartmentRepository.getDepartmentWithStudents();
+    }
+
+
 
 
 }

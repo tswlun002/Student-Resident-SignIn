@@ -1,5 +1,6 @@
 package com.application.server;
-import com.application.server.model.ResidentStudentService;
+import com.application.server.model.ResidenceRegisterService;
+import com.application.student.data.Student;
 import com.application.student.model.StudentService;
 import com.application.register.model.OnSignings;
 import com.application.register.model.Signing;
@@ -18,7 +19,7 @@ import java.util.List;
 public class Server implements OnSignings {
 
     private List<Signing> signInItems;
-    private  final ResidentStudentService residentStudentService;
+    private  final ResidenceRegisterService residenceRegisterService;
 
     private final ResidentDB residentDB;
 
@@ -30,8 +31,8 @@ public class Server implements OnSignings {
     /**
      *Default construct
      */
-    public Server(ResidentStudentService residentStudentService, ResidentSignRules residentSignRules, ResidentDB residentDB, School school){
-        this.residentStudentService = residentStudentService;
+    public Server(ResidenceRegisterService residenceRegisterService, ResidentSignRules residentSignRules, ResidentDB residentDB, School school){
+        this.residenceRegisterService = residenceRegisterService;
         this.residentSignRules=residentSignRules;
         this.residentDB=residentDB;
         this.school = school;
@@ -39,30 +40,30 @@ public class Server implements OnSignings {
 
     /**
      * Authenticate studentService, validate visitor , check max signings of studentService and check signing time
-     * @param studentService - studentService object
+     * @param student - studentService object
      * @param visitor - visitor object
      * @return - true if  signing meet rules else false
      */
-    public boolean authenticateAndAuthorizationSchoolmate(StudentService studentService, SchoolMate visitor) throws Exception {
-        return    withInSigningTime(LocalTime.now()) & validateHost(studentService) & validateSchoolmate(visitor) &
-                countNumberSignIn(studentService.getHostNumber(), new Date(System.currentTimeMillis()));
+    public boolean authenticateAndAuthorizationSchoolmate(Student student, SchoolMate visitor) throws Exception {
+        return    withInSigningTime(LocalTime.now()) & validateHost(student) & validateSchoolmate(visitor) &
+                countNumberSignIn(student.getStudentNumber(), new Date(System.currentTimeMillis()));
     }
 
     /**
      * Authenticate studentService, validate visitor , check max signings of studentService and check signing time
-     * @param studentService - studentService object
+     * @param student - studentService object
      * @param visitor - visitor object
      * @return - true if  signing meet rules else false
      */
-    public boolean authenticateAndAuthorizationRelative(StudentService studentService, Relative visitor) throws Exception {
-        return withInSigningTime(LocalTime.now()) & validateHost(studentService) & validateId(visitor.getIdNumber()) &
-                countNumberSignIn(studentService.getHostNumber(), new Date(System.currentTimeMillis())) ;
+    public boolean authenticateAndAuthorizationRelative(Student student, Relative visitor) throws Exception {
+        return withInSigningTime(LocalTime.now()) & validateHost(student) & validateId(visitor.getIdNumber()) &
+                countNumberSignIn(student.getStudentNumber(), new Date(System.currentTimeMillis())) ;
     }
 
     /***
      *  Check sign in is with sign in period
      * @param currentTime - time student want to sign
-     * @return - true if current time is within the period of signing in the residentStudentService
+     * @return - true if current time is within the period of signing in the residenceRegisterService
      */
     public   boolean withInSigningTime(LocalTime currentTime) throws Exception {
 
@@ -98,16 +99,16 @@ public class Server implements OnSignings {
     }
 
     /**
-     * Validate is the said studentService  belong to the residentStudentService
-     * @param studentService - object of the studentService
+     * Validate is the said studentService  belong to the residenceRegisterService
+     * @param student - object of the studentService
      * @return - true if said studentService belong to res else false
      */
-    public    boolean validateHost(StudentService studentService) throws Exception {
-        if( residentDB.getHostList().stream().anyMatch(studentService::equals)){
+    public    boolean validateHost(Student student) throws Exception {
+        if( residentDB.getHostList().stream().anyMatch(student::equals)){
             return  true;
         }
         else {
-            throw new Exception("StudentService " + studentService.getFullName() + " is not found in ResidentStudentService database");
+            throw new Exception("StudentService " + student.getFullName() + " is not found in ResidenceRegisterService database");
         }
     }
 
