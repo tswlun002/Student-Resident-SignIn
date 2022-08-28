@@ -17,9 +17,6 @@ public interface StudentRepository extends JpaRepository <Student,Long>{
     <S extends Student> S save(S entity);
     @Override
     Student getReferenceById(Long aLong);
-
-    @Query(value = "select * from Student where studentNumber <:id", nativeQuery = true)
-    List<Student> getAllStudentAtRange(long id);
    @Query("select s from Student s where s.accommodation<>'no'")
     List<Student> getStudentsWithResOffer();
 }

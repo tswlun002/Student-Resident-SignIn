@@ -1,14 +1,14 @@
 package com.application.student.model;
-import com.application.server.data.Residence;
 import com.application.student.data.Student;
 import com.application.student.repostory.StudentRepository;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collection;
 import java.util.List;
 
 @Builder
@@ -19,29 +19,62 @@ public class StudentService implements OnSearchStudent{
     private  TreeStudents treeStudents;
     @Autowired
     protected StudentRepository studentRepository;
-
-    public  void saveStudent(){
-        Student student = Student.builder().studentNumber(getHostNumber()).
-                fullName(getFullName()).contact(getContact()).accommodation(getAccommodation()).build();
-        studentRepository.save(student);
+    
+    /**
+     * Save student to database
+     * @param student - to save to database
+     */
+    public  boolean saveStudent(Student student){
+        if(student !=null) {
+            studentRepository.save(student);
+        }
+        else throw new RuntimeException("Can not save null student");
+        return true;
     }
-    public Student getStudent(){
-        return  Student.builder().studentNumber(getHostNumber()).
-                fullName(getFullName()).contact(getContact()).accommodation(getAccommodation()).build();
-    }
-    public  List<Student> getAllStudent(){
-       return studentRepository.findAll();
-    }
-
 
     /**
-     *
-     * @return true if accommodation status yes else false
+     * Update Student  fullname or contact
+     * @param student - to be updated
+     * @return true if successfully updated else false
      */
-    public  boolean accommodationStatus(){
-        return  this.accommodation.equalsIgnoreCase("yes");
+    @Transactional
+    @Modifying
+    public  boolean updateStudent(Student student){
+        boolean updated =false;
+        if(student !=null){
+            try {
+                Student student1 = getStudent(student.getStudentNumber());
+                student1.setFullName(student.getFullName());
+                student1.setContact(student.getContact());
+                saveStudent(student1);
+                updated =true;
 
+            }catch (Exception e){
+                System.out.println(e.getMessage());
+                return  false;
+            }
+
+        }
+        return updated;
     }
+
+    /**
+     * Delete student from students entity
+     * @param student  to be deleted from students entity
+     * @return deleted student if it's present on students entity else null
+     */
+    public Student deleteStudent(Student student){
+        if(student ==null)return null;
+        else {
+            Student student1 = getStudent(student.getStudentNumber());
+            if(student1 !=null) {
+                studentRepository.deleteById(student1.getStudentNumber());
+                return  student1;
+            }
+            else return null;
+        }
+    }
+
 
     /**
      * Fetch all students then insert into binary tree
@@ -67,10 +100,42 @@ public class StudentService implements OnSearchStudent{
         return treeStudents.search(treeStudents.root,student);
     }
 
+    /**
+     * Get students with accommodation
+     * @return - list of students with accommodation
+     */
     public List<Student> getStudentsWithResOffer() {
        return studentRepository.getStudentsWithResOffer();
     }
 
+    /**
+     * Search for student given student number
+     * @param studentNumber - student oof the student
+     * @return - Student if student is valid
+     * @throws  - student with given student number does not exist
+     */
+    public Student getStudent(long studentNumber) {
+        Student student = studentRepository.getReferenceById(studentNumber);
+        if(student !=null) return student;
+        else throw new RuntimeException("Student with student number "+studentNumber+" does not exist");
+    }
+
+
+    /**
+     * Update department of the residence
+     * @param student - to change its res
+     */
+    public void changeDepartment(Student student) {
+        student.setDepartment(null);
+        studentRepository.save(student);
+    }
+
+    /**
+     * @return all students
+     */
+    public List<Student> getStudents() {
+        return  studentRepository.findAll();
+    }
 
     private static class Node implements  Comparable{
         Student student;
@@ -130,52 +195,6 @@ public class StudentService implements OnSearchStudent{
 
 
 
-    private long studentNumber;
-    private  String fullName;
-    private String contact;
-    private  String accommodation;
-    public long getHostNumber() {
-        return studentNumber;
-    }
 
-    public void setHostNumber(long hostNumber) {
-        this.studentNumber = hostNumber;
-    }
 
-    public String getFullName() {
-        return fullName;
-    }
-
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
-
-    public String getContact() {
-        return contact;
-    }
-
-    public void setContact(String contact) {
-        this.contact = contact;
-    }
-
-    public String getAccommodation() {
-        return accommodation;
-    }
-
-    public void setAccommodation(String accommodation) {
-        this.accommodation = accommodation;
-    }
-    /**
-     *
-     * @return to string for StudentService class
-     */
-    @Override
-    public String toString() {
-        return "StudentService{" +
-                "studentNumber='" + studentNumber + '\'' +
-                ", fullName='" + fullName + '\'' +
-                ", contact='" + contact + '\'' +
-                ", accommodation =" + accommodation +
-                '}';
-    }
 }
