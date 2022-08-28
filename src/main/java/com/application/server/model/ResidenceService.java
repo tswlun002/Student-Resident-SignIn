@@ -142,6 +142,12 @@ public class ResidenceService {
         return repository.getResidence(name,block);
     }
 
-
-
+    /**
+     * Update department of the residence
+     * @param residence - to change its res
+     */
+    public void changeDepartment(Residence residence) {
+        residence.setDepartment(null);
+        repository.save(residence);
+    }
 }

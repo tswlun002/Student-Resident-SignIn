@@ -9,8 +9,6 @@ import lombok.Builder;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.stream.IntStream;
 @Builder
@@ -94,7 +92,7 @@ public  class ResidentStudentService {
      * Student is checked if has been placed to room already
      * If student has been placed to room, then its placed to available room
      * @return  true if student(s) is placed else false
-     */
+
     public  boolean placeStudentRoom(String residence){
         List<ResidentStudent>roomsAvailable  = availableRoom();
         List<Student> students = departmentService.studentsPlacedAt(residence);
@@ -114,7 +112,7 @@ public  class ResidentStudentService {
         }
 
         return placed;
-    }
+    }*/
 
     /**
      * Check if the student is not already allocated or placed to room at the residence

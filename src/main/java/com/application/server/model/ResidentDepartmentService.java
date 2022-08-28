@@ -12,7 +12,6 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -225,6 +224,11 @@ public class ResidentDepartmentService {
 
     }
 
+    /**
+     * Get department using id of that department
+     * @param id - of the department to fetch from database
+     * @return  ResidenceDepartment
+     */
     public ResidenceDepartment getDepartmentWithResidence(Long id) {
         return  residenceDepartmentRepository.getDepartmentWithResidences(id);
     }
@@ -313,5 +317,43 @@ public class ResidentDepartmentService {
        return residenceDepartment;
 
    }
+
+    /**
+     * Remove residence from housing/residence department
+     * @param nameResidence - name of the residence to remove
+     * @param blockResidence - block of residence to remove
+     * @return true if residence successfully removed  else false
+     */
+    @Transactional
+    @Modifying
+   public  boolean removeResidence(String nameResidence ,String blockResidence){
+       Residence residence  = getResidence(nameResidence,blockResidence);
+       boolean removed  = false;
+       getDepartmentWithResidence();
+       if(existsSchoolResidence(residence) && residence.getDepartment()!=null){
+           ResidenceDepartment department  = getReferenceById(residence.getDepartment().getId());
+
+           department.getStudents().forEach(
+                   student -> studentService.changeDepartment(student)
+           );
+           residenceService.changeDepartment(residence);
+           department.getStudents().clear();
+           department.getResidence().clear();
+
+           residenceDepartmentRepository.delete(department);
+           removed =true;
+       }
+       return removed;
+   }
+
+    /**
+     * Get residence department  by id
+     * @param id - of the department to remove
+     * @return -residence department
+     */
+   ResidenceDepartment getReferenceById(Long id){
+       return residenceDepartmentRepository.getReferenceById(id);
+   }
+
 
 }
