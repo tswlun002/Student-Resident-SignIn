@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 import java.util.stream.IntStream;
 @Builder
 @AllArgsConstructor
@@ -82,9 +84,6 @@ public  class ResidenceRegisterService {
                                 } catch (RuntimeException e) {
                                     throw new RuntimeException(residence.getResidenceName() + " " + residence.getBlocks() + ", " +
                                             floor + ", " + (floor * 100 + flat) + ", " + getRoom(room) + "\n" + e.getMessage());
-                                } finally {
-                                    System.out.printf("Block %s, floor %d, flat %d, room %s\n", residence.getBlocks(),
-                                            floor, (floor * 100 + flat), getRoom(room));
                                 }
 
                             })
@@ -120,7 +119,7 @@ public  class ResidenceRegisterService {
     @Transactional
     @Modifying
     public void placeStudentToRoom(String name, String blocks, int floor, String flat, String room, long studentId) {
-        ResidenceRegister register = repository.getBy(blocks,floor,flat,room);
+        ResidenceRegister register = getRegisterBy(blocks,floor,flat,room);
         ResidenceDepartment department =  getDepartment(name,blocks);
         Student student =  getStudent(department,studentId);
         checkIfStudentIsNotAssignedOtherRoom(student);
@@ -139,6 +138,18 @@ public  class ResidenceRegisterService {
     }
 
     /**
+     * Get register room
+     * @param blocks of the room
+     * @param floor  of the room
+     * @param flat  of the room
+     * @param room to get register of
+     * @return register if room is found else null
+     */
+    public ResidenceRegister getRegisterBy(String blocks,int floor,String flat,String room){
+        return repository.getBy(blocks,floor,flat,room);
+    }
+
+    /**
      * Fetch student from students assigned to this residence  by res department
      * @param department of the contains residence of students
      * @param studentId of the student being fetched
@@ -151,17 +162,66 @@ public  class ResidenceRegisterService {
         else throw  new RuntimeException("The student: "+studentId+" is not found.");
     }
 
+
+    /**
+     * Fetch room/register record by student id from  student of the residence
+     * @param studentId of student to be fetched from residence register
+     * @return student if student with given student id is found else null
+     */
+    public  ResidenceRegister getStudentRoom(long studentId){
+        for(ResidenceRegister register :getResidenceRegister()){
+            if(register.getStudent().getStudentNumber()==studentId)return register;
+        }
+        return null;
+    }
+
+
     /**
      * Check if student is not assigned in other room
      * @param student is being checked
      * @return true if student does not have room else throw an exception
      */
     public  boolean checkIfStudentIsNotAssignedOtherRoom(Student student){
-        boolean assigned = repository.findAll().stream().anyMatch(register->
+        return getResidenceRegister().stream().anyMatch(register->
                 register.getStudent() != null && register.getStudent().equals(student));
+    }
 
-        if(assigned)throw  new RuntimeException(student+" is already has assigned to room");
-        return true;
+    /**
+     * Fetches all register data
+     * @return list of  ResidenceRegister
+     */
+    public List<ResidenceRegister> getResidenceRegister(){
+        return  repository.getResidenceRegister();
+    }
+
+    /***
+     * Change current room for student  to another room,
+     * it can be same flat or another.
+     * Changes must occur on same residence
+     * @param studentId of the student that changes room
+     * @param block new block student changes to
+     * @param floor new floor student changes to
+     * @param flat  new flat student changes to
+     * @param room new room student changes to
+     * @return true if student changes room successfully else false
+     */
+    public boolean changeStudentRoom(long studentId,String block, int floor,String flat, String room){
+        ResidenceRegister room1 = getStudentRoom(studentId);
+        if(room1 !=null){
+            removeStudentRoom(room1);
+            placeStudentToRoom(room1.getResidence().getResidenceName(),block,floor,flat,room,studentId);
+            return true;
+        }else return false;
+
+    }
+
+    /**
+     * Remove student from the room
+     * @param register record of the room here student is being removed from
+     */
+    private void removeStudentRoom(ResidenceRegister register){
+        register.setStudent(null);
+        repository.save(register);
     }
 
 }

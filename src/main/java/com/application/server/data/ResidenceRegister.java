@@ -7,7 +7,6 @@ import java.util.Objects;
 
 @Getter
 @Setter
-@ToString
 @Entity
 @Builder
 @NoArgsConstructor
@@ -24,15 +23,13 @@ public class ResidenceRegister {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumns({
             @JoinColumn(name = "residenceId", referencedColumnName = "id"),
-            @JoinColumn(name = "blocks",referencedColumnName = "blocks"),
-            @JoinColumn(name = "residence",referencedColumnName = "residenceName")
+
     })
     private  Residence residence;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumns({
             @JoinColumn(name = "studentNumber",referencedColumnName = "studentNumber"),
-            @JoinColumn(name ="StudentName", referencedColumnName = "fullname")
     })
     private Student student;
 
