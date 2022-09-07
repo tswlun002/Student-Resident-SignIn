@@ -25,27 +25,12 @@ public class ResidenceDepartment implements Serializable {
     }
     @Column(nullable = false)
     private String accommodation;
-    @OneToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "AccommodatedStudents",
-            joinColumns = {@JoinColumn(name="ResidenceDepartId")},
-            inverseJoinColumns =  {@JoinColumn(name = "studentId",referencedColumnName = "studentNumber"),
-                    @JoinColumn(name ="studentName", referencedColumnName = "fullname")}
 
-
-    )
+    @OneToMany(mappedBy = "department",fetch = FetchType.LAZY)
     private Set<Student> students = new HashSet<>();
-    @OneToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "SchoolResidences",
-            joinColumns =  @JoinColumn(name = "ResidenceDepartId"),
-            inverseJoinColumns = {@JoinColumn(name = "residenceId", referencedColumnName = "id"),
-                                  @JoinColumn(name = "residenceName", referencedColumnName = "residenceName"),
-                                  @JoinColumn(name = "blocks",referencedColumnName = "blocks")
-            }
 
-    )
-    private Set<Residence> residence = new HashSet<>();
+    @OneToOne(mappedBy = "department",fetch = FetchType.LAZY)
+    private Residence residence ;
 
     public void setId(Long id) {
         this.id = id;

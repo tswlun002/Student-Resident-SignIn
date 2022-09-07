@@ -9,14 +9,11 @@ import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
-
-
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Service
 public class AddressService {
-
     @Autowired
     private AddressRepository repository;
     private TreeAddress treeAddress;
@@ -27,19 +24,14 @@ public class AddressService {
      * @param address - address being saved
      * @return true if address saved  else false
      */
-    public boolean saveAddress(Address address){
+    public Address saveAddress(Address address){
         Address address1 = repository.getAddress(address.getStreetNumber(),
                 address.getStreetName(),address.getSuburbs());
-        boolean saved = false;
         if(address1==null) {
             repository.save(address);
-            saved=true;
-        }
-        return saved;
-    }
 
-    public void removeAddress(Long id) {
-        repository.deleteById(id);
+        }
+        return address1;
     }
     /**
      * Update address of the residence.
@@ -47,13 +39,16 @@ public class AddressService {
      * @return - true if successfully updated otherwise false
      */
     public boolean updateAddress(Address address) {
-        Address address1 = repository.getReferenceById(address.getId());
-        boolean saved = false;
-        if(address1!=null) {
+        try{
+            Address address1 = repository.getReferenceById(address.getId());
+            address1.setStreetNumber(address.getStreetNumber());
+            address1.setStreetName(address.getStreetName());
+            address1.setSuburbs(address.getSuburbs());
+            address1.setCity(address.getCity());
+            address1.setPostcode(address.getPostcode());
             repository.save(address);
-            saved=true;
-        }
-        return saved;
+        }catch (Exception e){return  false;}
+        return true;
     }
 
     private static class Node implements  Comparable{

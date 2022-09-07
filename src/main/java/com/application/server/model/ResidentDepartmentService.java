@@ -3,6 +3,7 @@ import com.application.server.data.Residence;
 import com.application.server.data.ResidenceDepartment;
 import com.application.student.data.Student;
 import com.application.server.repository.ResidenceDepartmentRepository;
+import com.application.student.model.OnStudentChanges;
 import com.application.student.model.StudentService;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,77 +13,159 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-
 import javax.annotation.PostConstruct;
-import java.util.*;
+import java.util.List;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Service
-public class ResidentDepartmentService {
-    @Autowired private ResidenceDepartmentRepository residenceDepartmentRepository;
+public class ResidentDepartmentService implements OnStudentChanges,OnChangesResidence {
+    @Autowired private ResidenceDepartmentRepository repository;
     @Autowired private StudentService studentService;
     @Autowired private ResidenceService residenceService;
     @Autowired private ResidenceRegisterService residenceRegisterService;
     private List<Student> students;
     private String accommodation_status;
-
     private  List<ResidenceDepartment>residenceDepartmentList;
+
+    /**
+     * Fetch all  department residences data from database
+     * @return List of ResidenceDepartment
+     */
+    @PostConstruct
+    List<ResidenceDepartment> getDepartmentWithResidence(){
+        residenceDepartmentList= repository.getDepartments();
+        return  residenceDepartmentList;
+    }
+
+    /**
+     * notify about student added to students entity
+     */
+    @Override
+    public void addedStudent(Student student) {
+
+        if(student !=null)saveStudentWithResidences(student);
+    }
+
+    /**
+     * notify about student deleted to students entity
+     * @param student was deleted on students entity
+     * */
+    @Override
+    public void deletedStudent(Student student) {
+        if(student !=null)deleteStudent(student);
+
+    }
+
+    /**
+     * Notify when residence is a deleted
+     *
+     * @param residence deleted  or to be deleted
+     */
+    @Override
+    public void deletedResidence(Residence residence) {
+           if(residence !=null) removeResidence(residence);
+    }
 
     /**
      * Save all registered students
      * First  fetch all students that have residence
      * Group them according to their residence
      * Then save these students
-     * @return hashmap of residence their set of students
      */
-    public HashMap<String, Set<Student>> saveStudentWithResidences(){
-        Set<Student> studentSet= getStudentsNotPlaced();
+    public void saveStudentWithResidences(Student student){
         HashMap<String ,Set<Student>>  setHashMap = new HashMap<>();
-        categoriseStudentByRes(setHashMap, studentSet);
+        categoriseStudentByRes(setHashMap, student);
 
         setHashMap.forEach(
-               (key, value)->{
+                (key, students)->{
 
-                   String []residenceInfo = key.split(",");
-                   String name  = StringUtils.capitalize(residenceInfo[0].trim());
-                   String block  = (residenceInfo.length==2)?StringUtils.capitalize(residenceInfo[1].trim()):name;
-                   Residence residence = getResidence(name, block);
-                   getDepartmentWithResidence();
+                    String []residenceInfo = key.split(",");
+                    String name  = StringUtils.capitalize(residenceInfo[0].trim());
+                    String block  = (residenceInfo.length==2)?StringUtils.capitalize(residenceInfo[1].trim()):name;
+                    Residence residence = getResidence(name, block);
 
-                   if(residence != null) {
+                    if(residence != null) {
+                        if(!existsSchoolResidence(residence)) {
+                          addNewDepartment(residence,students,name,block);
 
-                          if(!existsSchoolResidence(residence)) {
-                              ResidenceDepartment residenceDepartment = ResidenceDepartment.builder().students(value)
-                                      .residence(Set.of(residence)).accommodation(name + "," + block).build();
-                              residenceDepartmentRepository.save(residenceDepartment);
-                              setDepartmentResidence(residence,residenceDepartment);
-                              setDepartmentStudent(value,residenceDepartment);
+                        }else {
+                            //insert into existing set
+                            addOnExistingDepartment(residence,students,key);
+                        }
+                    }else throw new RuntimeException("Residence "+key+" does not exist");
 
-                          }else {
-                              //insert into existing set
-                              value.forEach(
-                                      student ->{
+                }
+        );
+    }
 
-                                          ResidenceDepartment residenceDepartment =addToStudentSet(student,residence);
-                                          if(residenceDepartment != null) {
-                                              residenceDepartment.getResidence().add(residence);
-                                              residenceDepartmentRepository.save(residenceDepartment);
-                                              setDepartmentResidence(residence,residenceDepartment);
-                                              setDepartmentStudent(value,residenceDepartment);
-                                          }else  throw new RuntimeException("Residence "+key+" does not exist");
-                                      }
-                              );
+    /**
+     * Create new department instance or record and save it to database
+     * @param residence - of the department
+     * @param students - of the residence of the department
+     * @param resName - is the residence name
+     * @param block - blocks of  residence
+     */
+   private  void addNewDepartment(Residence residence,Set<Student>students, String resName, String block){
 
-                          }
-                   }else throw new RuntimeException("Residence "+key+" does not exist");
+       ResidenceDepartment residenceDepartment = ResidenceDepartment.builder().students(students)
+               .residence(residence).accommodation(resName + "," + block).build();
 
+       repository.save(residenceDepartment);
+       setDepartmentResidence(residence,residenceDepartment);
+       setDepartmentStudent(students,residenceDepartment);
+   }
+
+    /**
+     * Add student into existing residence department
+     * @param residence of the student of  department
+     * @param students to be added to department
+     * @param group -  string name & blocks of the residence
+     */
+   private void addOnExistingDepartment(Residence residence,Set<Student>students,String group){
+       students.forEach(
+               student1->{
+                   ResidenceDepartment residenceDepartment =addToStudentSet(student1,residence);
+                   if(residenceDepartment != null) {
+                       setDepartmentResidence(residence,residenceDepartment);
+                       setDepartmentStudent(students,residenceDepartment);
+                   }else  throw new RuntimeException("Residence "+group+" does not exist");
                }
        );
-        return setHashMap;
+   }
+
+    /**
+     * Remove residence with no students
+     *-remove residence from set of residence
+     *-remove department reference on residence
+     *-remove department instance itself
+     */
+    @Transactional
+    @Modifying
+    public  void removeDepartmentWithNoStudents(){
+        List<ResidenceDepartment>list = getDepartmentWithNoStudents();
+        list.forEach( department -> {
+            setDepartmentResidence(department.getResidence(), null);
+            department.setResidence(null);
+            repository.delete(department);
+
+
+        });
     }
+
+    /**
+     * Fetch all departments with residence but no student
+     * @return list of departments with no students
+     */
+    public List<ResidenceDepartment> getDepartmentWithNoStudents(){
+        return repository.getDepartmentWithNoStudents();
+    }
+
 
     /**
      * Assign residence to department
@@ -104,12 +187,10 @@ public class ResidentDepartmentService {
         students.forEach(
                 student -> {
                     student.setDepartment(department);
-                    studentService.saveStudent(student);
+                    studentService.updateStudentDepartment(student);
                 }
         );
     }
-
-
     /**
      *  Added student to set of student of the particular residence
      * @param student - student to add into set of student of residence in department on residences
@@ -119,11 +200,11 @@ public class ResidentDepartmentService {
     public ResidenceDepartment addToStudentSet(Student student,Residence residence){
         ResidenceDepartment residenceDepartment= null;
         for(ResidenceDepartment residenceDepartment1 : residenceDepartmentList) {
-                residenceDepartment1.getStudents().clear();
+            if (residenceDepartment1.getResidence().equals(residence)) {
                 residenceDepartment1.getStudents().add(student);
                 residenceDepartment = residenceDepartment1;
-
                 break;
+            }
         }
         return residenceDepartment;
     }
@@ -143,11 +224,13 @@ public class ResidentDepartmentService {
      * @return - true if added already else false
      */
     public boolean existsSchoolResidence(Residence residence){
-        return residenceDepartmentList.stream().anyMatch(
-                residenceDepartment -> residenceDepartment.getResidence().stream().anyMatch(
-                        residence1 ->  residence1.equals(residence)
-                )
-        );
+        List<ResidenceDepartment>list = getDepartmentWithResidence();
+        if(list!=null && list.size()>0) {
+            return list.stream().anyMatch(
+                    residenceDepartment -> residenceDepartment.getResidence().equals(residence)
+            );
+        }
+        return false;
     }
 
 
@@ -164,46 +247,31 @@ public class ResidentDepartmentService {
     /**
      * Group students according to their residence/accommodation  status .
      * Accommodation status map to set of students belongs to it
+     *
      * @param setHashMap - hashmap to categorise/group these students
-     * @param studentSet - set of all student to group or map
-     * @return - hashmap of accommodation to set of students
+     * @param student    -  student to group or map
      */
-    public   HashMap<String, Set<Student>> categoriseStudentByRes(HashMap<String, Set<Student>> setHashMap, Set<Student> studentSet){
-        studentSet.forEach(
-                student -> {
+    public void categoriseStudentByRes(HashMap<String, Set<Student>> setHashMap, Student student){
+        String[] residenceInfo = student.getAccommodation().split(",");
+        String name = residenceInfo[0].trim();
+        String block = (residenceInfo.length == 2) ? residenceInfo[1].trim() : name;
+        String key = name.toLowerCase() + "," + block.toLowerCase();
+        if(residenceExists(name, block)) {
+            if (setHashMap.isEmpty()) {
+                Set<Student> studentSet1 = new HashSet<>();
+                studentSet1.add(student);
+                setHashMap.put(key, studentSet1);
+            } else if (setHashMap.containsKey(key)) {
+                setHashMap.get(key).add(student);
+            } else {
+                Set<Student> studentSet1 = new HashSet<>();
+                studentSet1.add(student);
+                setHashMap.put(key, studentSet1);
+            }
+        }
 
-                        String[] residenceInfo = student.getAccommodation().split(",");
-                        String name = residenceInfo[0].trim();
-                        String block = (residenceInfo.length == 2) ? residenceInfo[1].trim() : name;
-                        String key = name.toLowerCase() + "," + block.toLowerCase();
-                        if(residenceExists(name, block)) {
-                            if (setHashMap.isEmpty()) {
-                                Set<Student> studentSet1 = new HashSet<>();
-                                studentSet1.add(student);
-                                setHashMap.put(key, studentSet1);
-                            } else if (setHashMap.containsKey(key)) {
-                                setHashMap.get(key).add(student);
-                            } else {
-                                Set<Student> studentSet1 = new HashSet<>();
-                                studentSet1.add(student);
-                                setHashMap.put(key, studentSet1);
-                            }
-                        }
-                    }
-
-
-        );
-        return  setHashMap;
     }
 
-    /**
-     * Fetch all  department residences data from database
-     * @return List of ResidenceDepartment
-     */
-    List<ResidenceDepartment> getDepartmentWithResidence(){
-        residenceDepartmentList= residenceDepartmentRepository.getDepartments();
-        return  residenceDepartmentList;
-    }
 
     /**
      * Fetch   department residences data from database
@@ -211,10 +279,11 @@ public class ResidentDepartmentService {
      */
     ResidenceDepartment getDepartment(Student student, Residence residence){
 
-        ResidenceDepartment residenceDepartment=
-                residenceDepartmentRepository.getDepartments(student.getStudentNumber(),residence.getId(),
+        ResidenceDepartment residenceDepartment= repository.getDepartments(student.getStudentNumber(),residence.getId(),
                         residence.getResidenceName()+","+residence.getBlocks());
+
         if(residenceDepartment !=null)return  residenceDepartment;
+
         else{
               residenceDepartment = getDepartmentWithResidence(residence.getId());
               if(residenceDepartment ==null)
@@ -231,7 +300,7 @@ public class ResidentDepartmentService {
      * @return  ResidenceDepartment
      */
     public ResidenceDepartment getDepartmentWithResidence(Long id) {
-        return  residenceDepartmentRepository.getDepartments(id);
+        return  repository.getDepartments(id);
     }
 
 
@@ -239,7 +308,7 @@ public class ResidentDepartmentService {
      * Filter out all students that not yet stored at department residence
      * Get students not yet placed.
      * Then check if they are not placed at any residence
-     * @return set of students that not yet placed
+     * @return set of students that not yet placed at any residence
      */
     public   Set<Student> getStudentsNotPlaced(){
         List<ResidenceDepartment> deptResidences = getDepartmentWithResidence();
@@ -258,7 +327,6 @@ public class ResidentDepartmentService {
         return residenceDepartments.stream().anyMatch(
                 residenceDepartment -> residenceDepartment.getStudents().stream().anyMatch(
                         student1 -> student1.equals(student)
-
                 )
         );
     }
@@ -282,11 +350,13 @@ public class ResidentDepartmentService {
           ResidenceDepartment residenceDepartment = getDepartment(student1,residence);
           ResidenceDepartment residenceDepartment1 = removeStudent(residenceDepartment,student1);
 
+
           if(! residenceDepartment1.getStudents().contains(student))
           {
-                 student.setAccommodation(nextResName);
-                 studentService.saveStudent(student);
-                 updated=true;
+              student.setDepartment(null);
+              student.setAccommodation(nextResName);
+              studentService.saveStudent(student);
+              updated=true;
           }
       }catch (Exception e){
           throw  new RuntimeException(e.getMessage());
@@ -312,35 +382,36 @@ public class ResidentDepartmentService {
      * @param student - student to remove from department of residence
      * @return  residenceDepartment without given student
      */
-   ResidenceDepartment removeStudent(ResidenceDepartment residenceDepartment, Student student){
+   private ResidenceDepartment removeStudent(ResidenceDepartment residenceDepartment, Student student){
        residenceDepartment.getStudents().remove(student);
        return residenceDepartment;
 
    }
-
     /**
      * Remove residence from housing/residence department
      * @param nameResidence - name of the residence to remove
      * @param blockResidence - block of residence to remove
      * @return true if residence successfully removed  else false
      */
-    @Transactional
-    @Modifying
-   public  boolean removeResidence(String nameResidence ,String blockResidence){
-       Residence residence  = getResidence(nameResidence,blockResidence);
+    public  boolean removeResidence(String nameResidence ,String blockResidence){
+        Residence residence  = getResidence(nameResidence,blockResidence);
+        return removeResidence(residence);
+    }
+
+    /**
+     * Remove residence from housing/residence department
+     * @param residence to be removed
+     * @return true if residence successfully removed  else false
+     */
+   private   boolean removeResidence(Residence residence){
        boolean removed  = false;
-       getDepartmentWithResidence();
        if(existsSchoolResidence(residence) && residence.getDepartment()!=null){
-           ResidenceDepartment department  = getReferenceById(residence.getDepartment().getId());
-
-           department.getStudents().forEach(
-                   student -> studentService.changeDepartment(student)
-           );
-           residenceService.changeDepartment(residence);
+           ResidenceDepartment department  = getDepartment(residence.getDepartment().getId());
+           setDepartmentStudent(department.getStudents(),null);
+           setDepartmentResidence(department.getResidence(),null);
            department.getStudents().clear();
-           department.getResidence().clear();
-
-           residenceDepartmentRepository.delete(department);
+           department.setResidence(null);
+           repository.delete(department);
            removed =true;
        }
        return removed;
@@ -351,39 +422,19 @@ public class ResidentDepartmentService {
      * @param id - of the department to remove
      * @return -residence department
      */
-   ResidenceDepartment getReferenceById(Long id){
-       return residenceDepartmentRepository.getReferenceById(id);
+   ResidenceDepartment getDepartment(Long id){
+       return repository.getDepartmentById(id);
    }
 
-    /**
-     * Remove unregistered students from residence
-     */
-    @PostConstruct
-   public  void removeStudentNotRegistered(){
-       List<Student>registeredStudent  = studentService.getStudents();
-       getDepartmentWithStudents().forEach(
-               studentString->{
-                   String[] studentInfo  = studentString.split(",");
-                   Long studentNo  = Long.parseLong(studentInfo[1].trim());
-                   String name = studentInfo[2];
-                   if(registeredStudent.stream().noneMatch(
-                           student1 -> Objects.equals(student1.getStudentNumber(), studentNo) &&
-                                   student1.getFullName().equalsIgnoreCase(name)
-                   )){
-                       deleteStudent(studentNo,name);
-                   }
 
-               });
-
-   }
 
     /**
      * Remove student from residence data
-     * @param studentId - student number of the student to be removed
-     * @param studentName - of the student to be removed
      */
-   public  void  deleteStudent(Long studentId , String studentName ) {
-       residenceDepartmentRepository.deleteStudent(studentId, studentName);
+   public  void  deleteStudent(Student student ) {
+       residenceDepartmentList.forEach(
+               dept-> dept.getStudents().remove(student)
+       );
    }
 
 
@@ -391,8 +442,8 @@ public class ResidentDepartmentService {
      * Fetch All students that stays at residences
      * @return  string list of students
      */
-    List<String> getDepartmentWithStudents(){
-       return residenceDepartmentRepository.getDepartmentWithStudents();
+    List<ResidenceDepartment> getDepartmentWithStudents(){
+       return repository.getDepartmentWithStudents();
     }
 
 

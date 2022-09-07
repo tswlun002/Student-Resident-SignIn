@@ -24,7 +24,7 @@ public class Residence implements Serializable {
     private int numberFlats;
     private int numberRoom;
     private  int capacity;
-    @OneToOne(fetch = FetchType.LAZY,optional = false,orphanRemoval = true,cascade = {CascadeType.MERGE,CascadeType.PERSIST})
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumns({
             @JoinColumn(name = "addressId", referencedColumnName = "id"),
     })

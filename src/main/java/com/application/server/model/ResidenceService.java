@@ -10,13 +10,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @Service
-public class ResidenceService {
+public class ResidenceService{
 
     @Autowired
     private  AddressService addressService;
@@ -24,6 +23,12 @@ public class ResidenceService {
     private ResidenceRepository repository;
     @Autowired
     private  ResidenceRulesService rulesService;
+
+    @Autowired
+    private OnChangesResidence onChangesResidence;
+
+    @Autowired
+    private  OnChangesRules onChangesRules;
 
 
     /**
@@ -34,6 +39,8 @@ public class ResidenceService {
     public boolean saveResidenceInfo(Residence residence){
           boolean saved= false;
         if ( !isExists(residence.getResidenceName(), residence.getBlocks())){
+                   Address address= addressService.saveAddress(residence.getAddress());
+                   if(address!=null){residence.setAddress(address);}
                     repository.save(residence);
                     saved=true;
         }
@@ -60,12 +67,7 @@ public class ResidenceService {
         Residence residence1 = repository.getResidence(residence.getResidenceName(),residence.getBlocks());
         if(residence1 != null){
             Address address =  residence.getAddress();
-            residence1.getAddress().setStreetNumber(address.getStreetNumber());
-            residence1.getAddress().setStreetName(address.getStreetName());
-            residence1.getAddress().setSuburbs(address.getSuburbs());
-            residence1.getAddress().setCity(address.getCity());
-            residence1.getAddress().setPostcode(address.getPostcode());
-            updated= addressService.updateAddress(residence1.getAddress());
+            updated= addressService.updateAddress(address);
         }
         return updated;
     }
@@ -75,9 +77,9 @@ public class ResidenceService {
      * @param residence - updated residence (residence with new properties)
      * @return - true if successfully updated rules otherwise false
      */
-    @Transactional
-    @Modifying
-    public  boolean updateResidenceRules(Residence residence){
+     @Transactional
+     @Modifying
+    public   boolean updateResidenceRules(Residence residence){
         boolean updated=false;
         Residence residence1 = repository.getResidence(residence.getResidenceName(),residence.getBlocks());
         if(residence1 != null){
@@ -85,7 +87,8 @@ public class ResidenceService {
             residence1.getResidenceRules().setStartSigningTime(rules.getStartSigningTime());
             residence1.getResidenceRules().setEndSigningTime(rules.getEndSigningTime());
             residence1.getResidenceRules().setNumberVisitor(rules.getNumberVisitor());
-            updated= rulesService.updateRules(residence1.getResidenceRules());
+            onChangesRules.addedRules(residence1.getResidenceRules());
+            updated=true;
         }
         return updated;
     }
@@ -96,18 +99,19 @@ public class ResidenceService {
      * @param residence - residence to delete
      * @return - true if successfully delete residence else false .
      */
+    @Transactional
+    @Modifying
     public  boolean removeResidence(Residence residence) {
         boolean removed = false;
         residence = repository.getResidence(residence.getResidenceName(),residence.getBlocks());
 
       if ( residence!=null){
             try {
-                repository.deleteById(residence.getId());
-                addressService.removeAddress(residence.getAddress().getId());
-                rulesService.removeRules(residence.getResidenceRules().getId());
+                onChangesResidence.deletedResidence(residence);
+                repository.delete(residence);
                 removed=true;
             }catch (Exception exception){
-                return false;
+                throw  new RuntimeException("Not deleted "+residence.getResidenceName()+residence.getBlocks()+"\n"+exception.getMessage() );
             }
 
         }
@@ -143,11 +147,16 @@ public class ResidenceService {
     }
 
     /**
-     * Update department of the residence
-     * @param residence - to change its res
+     * Delete rules for the residence
+     * @param residence of rules to be deleted
      */
-    public void changeDepartment(Residence residence) {
-        residence.setDepartment(null);
-        repository.save(residence);
+    public   void  deleteResidenceRules(Residence residence){
+        residence = getResidence(residence.getResidenceName(),residence.getBlocks());
+        if(residence !=null && residence.getResidenceRules() !=null) {
+            ResidenceRules rules = residence.getResidenceRules();
+            residence.setResidenceRules(null);
+            updateResidence(residence);
+            onChangesRules.deletedRules(rules);
+        }
     }
 }

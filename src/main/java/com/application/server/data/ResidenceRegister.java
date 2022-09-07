@@ -3,9 +3,7 @@ import com.application.student.data.Student;
 import lombok.*;
 import org.hibernate.Hibernate;
 import javax.persistence.*;
-import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
 
 @Getter
 @Setter
@@ -23,7 +21,7 @@ public class ResidenceRegister {
     private  int floor;
     private  String flat;
     private  String room;
-    @OneToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumns({
             @JoinColumn(name = "residenceId", referencedColumnName = "id"),
             @JoinColumn(name = "blocks",referencedColumnName = "blocks"),
@@ -31,16 +29,12 @@ public class ResidenceRegister {
     })
     private  Residence residence;
 
-    @OneToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "StudentsOfResidence",
-            joinColumns = {@JoinColumn(name="Id")},
-            inverseJoinColumns =  {@JoinColumn(name = "studentId",referencedColumnName = "studentNumber"),
-                    @JoinColumn(name ="studentName", referencedColumnName = "fullname")}
-
-
-    )
-    private Set<Student> students = new HashSet<>();
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumns({
+            @JoinColumn(name = "studentNumber",referencedColumnName = "studentNumber"),
+            @JoinColumn(name ="StudentName", referencedColumnName = "fullname")
+    })
+    private Student student;
 
     @Override
     public boolean equals(Object o) {

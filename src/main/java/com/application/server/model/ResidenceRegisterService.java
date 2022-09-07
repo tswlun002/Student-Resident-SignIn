@@ -1,15 +1,16 @@
 package com.application.server.model;
 import com.application.server.data.Residence;
+import com.application.server.data.ResidenceDepartment;
 import com.application.server.data.ResidenceRegister;
 import com.application.server.repository.ResidenceRegisterRepository;
 import com.application.student.data.Student;
-import com.application.student.model.StudentService;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Service;
-import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.stream.IntStream;
 @Builder
 @AllArgsConstructor
@@ -18,55 +19,80 @@ import java.util.stream.IntStream;
 public  class ResidenceRegisterService {
     @Autowired
     private ResidenceRegisterRepository repository;
-    @Autowired
+   @Autowired
     private ResidenceService residenceService;
-    @Autowired
-    private StudentService studentService;
     @Autowired
     private  ResidentDepartmentService departmentService;
 
-    /***
-     * Get Residence details and store them
+    /**
+     * Fetch residence by name and blocks
+     * @param name of the residence
+     * @param block of the residence being fetched
+     * @return residence matched name and block
      */
+    public  Residence getResidence(String name,String block){
+        return residenceService.getResidence(name,block);
+    }
 
-    public  void fillResidentFeature(String name){
-        List<Residence>residences  =residenceService.getAllResidence(name);
-        residences.forEach(
-                residence-> {                                       // block
+    /**
+     * Fetch department by name and blocks of residence
+     * @param name of the residence
+     * @param block of the residence being fetched
+     * @return department matched name and block of residence
+     */
+     public  ResidenceDepartment getDepartment(String name,String block){
+         Residence residence  = getResidence(name,block);
+         if(residence !=null && residence.getDepartment()!=null){
+             return  departmentService.getDepartment(residence.getDepartment().getId());
+         }
+         return null;
+     }
 
-                    IntStream.range(1, residence.getNumberFloors()+1).forEach(    // each floor
-                            floor -> {
+    /**
+     * Label/name rooms of residence
+     * Store  information   block, floor, flat for each room
+     * Rooms are labels by range of letters from A-to range.
+     * If there are 3 rooms in a flat then room will be labeled by A-C
+     * @param name of the residence
+     * @param block  at the residence
+     */
+     @Transactional
+     @Modifying
+    public  void residenceRoom(String name, String block){
+         ResidenceDepartment department = getDepartment(name,block);
+         if(department !=null && department.getStudents().size()>0 && department.getResidence()!=null){
+             Residence residence = department.getResidence();
+            int floors = residence.getNumberFloors();
+            int flats  = residence.getNumberFlats();
+            int rooms  = residence.getNumberRoom();
+            IntStream.range(1,floors+1).forEach(floor->
+                    IntStream.range(1,flats+1).forEach(flat-> IntStream.range(1,rooms+1).forEach(room-> {
+                                try {
 
-                                IntStream.range(1, residence.getNumberFlats()+1).forEach( //each flat
-                                        flat -> {
+                                    ResidenceRegister residenceRegister =
+                                            ResidenceRegister.builder().residence(residence).flat((floor * 100 + flat) + "").
+                                                    floor(floor).room(getRoom(room)).build();
 
-                                            IntStream.range(1, residence.getNumberRoom()+1).forEach(    // each room
-                                                    room->{
-                                                        try {
+                                    boolean notExists = repository.getBy(residence.getBlocks(), floor,
+                                            (floor * 100 + flat) + "", getRoom(room)) == null;
 
-                                                            ResidenceRegister residenceRegister = ResidenceRegister.builder().residence(residence).flat((floor * 100 + flat) + "").
-                                                            floor(floor).room(getRoom(room)).build();
-                                                            boolean notExists =repository.getBy(residence.getBlocks(),floor,(floor * 100 + flat) + "",getRoom(room))==null;
-                                                            if(notExists) repository.save(residenceRegister);
-                                                        }catch (RuntimeException e){
-                                                            throw  new RuntimeException(residence.getResidenceName()+" "+residence.getBlocks()+", "+ floor+", "+(floor*100+flat)+", "+getRoom(room)+"\n"+e.toString());
-                                                        }
-                                                        finally {
-                                                            System.out.printf("Block %s, floor %d, flat %d, room %s\n",residence.getBlocks(), floor, (floor*100+flat),getRoom(room));
-                                                        }
-                                                    }
-                                             );
-
-                                        }
-                                );
+                                    if (notExists) repository.save(residenceRegister);
 
 
-                            }
-                    );
+                                } catch (RuntimeException e) {
+                                    throw new RuntimeException(residence.getResidenceName() + " " + residence.getBlocks() + ", " +
+                                            floor + ", " + (floor * 100 + flat) + ", " + getRoom(room) + "\n" + e.getMessage());
+                                } finally {
+                                    System.out.printf("Block %s, floor %d, flat %d, room %s\n", residence.getBlocks(),
+                                            floor, (floor * 100 + flat), getRoom(room));
+                                }
 
-                }
+                            })
 
-        );
+                    )
+            );
+         }
+
     }
 
     /**
@@ -81,49 +107,62 @@ public  class ResidenceRegisterService {
     }
 
     /**
-     * @return list of available room
+     * Place or assign student to room
+     * Check if the student is registered in the residence by department
+     * Check if the room is empty or not assigned to other student
+     * @param name of residence of the room where student is being assigned
+     * @param blocks of residence of the room where student is being assigned
+     * @param floor  of the room at the residence
+     * @param flat   of room  assigned to student
+     * @param room   assigned to student
+     * @param studentId  being place in the room
      */
-    public  List<ResidenceRegister> availableRoom(){
-       return repository.getAllAvailableRooms();
+    @Transactional
+    @Modifying
+    public void placeStudentToRoom(String name, String blocks, int floor, String flat, String room, long studentId) {
+        ResidenceRegister register = repository.getBy(blocks,floor,flat,room);
+        ResidenceDepartment department =  getDepartment(name,blocks);
+        Student student =  getStudent(department,studentId);
+        checkIfStudentIsNotAssignedOtherRoom(student);
+        if(register!=null){
+            if(register.getStudent()==null) {
+                try {
+                    register.setStudent(student);
+                    repository.save(register);
+
+                } catch (Exception e) {
+                    throw new RuntimeException(e.getMessage());
+                }
+            }else  throw new RuntimeException("Room "+blocks +" "+flat+""+room+" is assigned to other student");
+
+        }else throw new RuntimeException("Residence "+name+" "+blocks +" is not found");
     }
 
     /**
-     * Places student(s) available rooms
-     * Student is checked if has been placed to room already
-     * If student has been placed to room, then its placed to available room
-     * @return  true if student(s) is placed else false
-
-    public  boolean placeStudentRoom(String residence){
-        List<ResidenceRegister>roomsAvailable  = availableRoom();
-        List<Student> students = departmentService.studentsPlacedAt(residence);
-        boolean placed = false;
-        for(int index=0 ; index<roomsAvailable.size(); index++){
-                    if(index<students.size()){
-                        ResidenceRegister room  = roomsAvailable.get(index);
-                        Student student = students.get(index);
-                        if(! isPlacedAtRoom(student)) {
-                            repository.placeStudent(student.getStudentNumber(), student.getFullName(),
-                                    room.getId(), room.getResidence().getResidenceName(), room.getResidence().getBlocks(),
-                                    room.getFlat(), room.getRoom());
-                            placed = true;
-                        }
-                    }
-                    else break;
-        }
-
-        return placed;
-    }*/
-
-    /**
-     * Check if the student is not already allocated or placed to room at the residence
-     * Student has no room if we get null when is being retrieved from database
-     * @param student  - student is being checked if the student has room
-     * @return false if the has been placed already else  true
+     * Fetch student from students assigned to this residence  by res department
+     * @param department of the contains residence of students
+     * @param studentId of the student being fetched
+     * @return student matches the id else throw exception
      */
-    private boolean isPlacedAtRoom(Student student) {
-        return true;  //repository.checkStudentHasRoom(student.getStudentNumber(), student.getFullName()) !=null;
+    public  Student getStudent(ResidenceDepartment department,long studentId){
+        Student student= department.getStudents().stream().filter(student1 ->
+                student1.getStudentNumber()==studentId).toList().get(0);
+        if(student!=null) return  student;
+        else throw  new RuntimeException("The student: "+studentId+" is not found.");
     }
 
+    /**
+     * Check if student is not assigned in other room
+     * @param student is being checked
+     * @return true if student does not have room else throw an exception
+     */
+    public  boolean checkIfStudentIsNotAssignedOtherRoom(Student student){
+        boolean assigned = repository.findAll().stream().anyMatch(register->
+                register.getStudent() != null && register.getStudent().equals(student));
+
+        if(assigned)throw  new RuntimeException(student+" is already has assigned to room");
+        return true;
+    }
 
 }
 
