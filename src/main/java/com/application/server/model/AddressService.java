@@ -1,14 +1,12 @@
 package com.application.server.model;
 
-import com.application.server.repository.AddressRepository;
 import com.application.server.data.Address;
-import com.application.visitor.data.Visitor;
+import com.application.server.repository.AddressRepository;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -105,21 +103,7 @@ public class AddressService {
             return node.compareTo(new Node(address))<0? search(node.left,address) : search(node.right, address);
         }
 
-        /**
-         * get for address in the tree of visitor
-         * @param node - node of the tree search on
-         * @param visitor - address searching
-         * @return  address if found else null
-         */
-        protected Address getAddress(Node node, Visitor visitor){
-           if(node==null || visitor==null) return  null;
-           if( node.address.getVisitors().stream().anyMatch(
-                    existingVisitor ->existingVisitor.equals(visitor)
-           )) return node.address;
 
-           return node.compareTo(new Node(Address.builder().visitors(List.of(visitor)).build()))<0?
-                    getAddress(node.left,visitor) : getAddress(node.right, visitor);
-        }
     }
 }
 
