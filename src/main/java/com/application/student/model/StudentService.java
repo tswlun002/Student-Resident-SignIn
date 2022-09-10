@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 
 @Builder
@@ -18,7 +17,9 @@ import java.util.List;
 public class StudentService implements OnSearchStudent{
     private  TreeStudents treeStudents;
     @Autowired
-    protected StudentRepository studentRepository;
+    private StudentRepository studentRepository;
+    @Autowired
+    private OnStudentChanges studentChanges;
     
     /**
      * Save student to database
@@ -26,7 +27,8 @@ public class StudentService implements OnSearchStudent{
      */
     public  boolean saveStudent(Student student){
         if(student !=null) {
-            studentRepository.save(student);
+            Student student1 =studentRepository.save(student);
+            studentChanges.addedStudent(student1);
         }
         else throw new RuntimeException("Can not save null student");
         return true;
@@ -42,17 +44,13 @@ public class StudentService implements OnSearchStudent{
     public  boolean updateStudent(Student student){
         boolean updated =false;
         if(student !=null){
-            try {
                 Student student1 = getStudent(student.getStudentNumber());
                 student1.setFullName(student.getFullName());
                 student1.setContact(student.getContact());
+                student1.setAccommodation(student.getAccommodation());
                 saveStudent(student1);
                 updated =true;
 
-            }catch (Exception e){
-                System.out.println(e.getMessage());
-                return  false;
-            }
 
         }
         return updated;
@@ -68,12 +66,22 @@ public class StudentService implements OnSearchStudent{
         else {
             Student student1 = getStudent(student.getStudentNumber());
             if(student1 !=null) {
+                studentChanges.deletedStudent(student);
                 studentRepository.deleteById(student1.getStudentNumber());
                 return  student1;
             }
             else return null;
         }
     }
+
+    /**
+     * Update student department
+     * @param student  to update its department
+     */
+    public  void updateStudentDepartment(Student student){
+        studentRepository.save(student);
+    }
+
 
 
     /**
@@ -83,9 +91,9 @@ public class StudentService implements OnSearchStudent{
     public   Node fetchAllStudents(){
         treeStudents = new TreeStudents();
         studentRepository.findAll().forEach(
-                student1 -> {
-                treeStudents.root= treeStudents.insert(treeStudents.root,student1);
-                }
+                student1 ->
+                treeStudents.root= treeStudents.insert(treeStudents.root,student1)
+
         );
         return treeStudents.root;
     }
@@ -120,23 +128,9 @@ public class StudentService implements OnSearchStudent{
         else throw new RuntimeException("Student with student number "+studentNumber+" does not exist");
     }
 
-
     /**
-     * Update department of the residence
-     * @param student - to change its res
+     * Make Student Node
      */
-    public void changeDepartment(Student student) {
-        student.setDepartment(null);
-        studentRepository.save(student);
-    }
-
-    /**
-     * @return all students
-     */
-    public List<Student> getStudents() {
-        return  studentRepository.findAll();
-    }
-
     private static class Node implements  Comparable{
         Student student;
         Node left;
@@ -156,6 +150,9 @@ public class StudentService implements OnSearchStudent{
         }
     }
 
+    /**
+     * Make Student binary tree
+     */
     static class TreeStudents{
 
         Node root;
