@@ -1,4 +1,6 @@
 package com.application.student.model;
+import com.application.server.data.Address;
+import com.application.server.model.AddressService;
 import com.application.student.data.Student;
 import com.application.student.repostory.StudentRepository;
 import lombok.AllArgsConstructor;
@@ -20,18 +22,34 @@ public class StudentService implements OnSearchStudent{
     private StudentRepository studentRepository;
     @Autowired
     private OnStudentChanges studentChanges;
+    @Autowired
+    private AddressService addressService;
+
     
     /**
      * Save student to database
      * @param student - to save to database
      */
-    public  boolean saveStudent(Student student){
+    public  Student saveStudent(Student student){
         if(student !=null) {
+            Address address =saveStudentAddress(student.getAddress());
+            student.setAddress(address);
             Student student1 =studentRepository.save(student);
-            studentChanges.addedStudent(student1);
+            if(! student.getAccommodation().equalsIgnoreCase("no"))studentChanges.addedStudent(student1);
+            student=student1;
         }
         else throw new RuntimeException("Can not save null student");
-        return true;
+        return student;
+    }
+
+
+    /**
+     * Save Student address
+     * @param address to be saved
+     */
+    public  Address saveStudentAddress(Address address){
+        if(address !=null)return addressService.saveAddress(address);
+        return null;
     }
 
     /**
@@ -48,6 +66,7 @@ public class StudentService implements OnSearchStudent{
                 student1.setFullName(student.getFullName());
                 student1.setContact(student.getContact());
                 student1.setAccommodation(student.getAccommodation());
+                student1.setAddress(student.getAddress());
                 saveStudent(student1);
                 updated =true;
 
@@ -126,6 +145,23 @@ public class StudentService implements OnSearchStudent{
         Student student = studentRepository.getReferenceById(studentNumber);
         if(student !=null) return student;
         else throw new RuntimeException("Student with student number "+studentNumber+" does not exist");
+    }
+
+    /**
+     * Get Student with residence by id
+     * @param studentNumber of the student
+     * @return student that has same id as studentNumber
+     */
+    public Student getStudentWithRes(Long studentNumber) {
+        return studentRepository.getStudent(studentNumber);
+    }
+    /**
+     * Get Student with or without residence by id
+     * @param studentNumber of the student
+     * @return student that has same id as studentNumber
+     */
+    public Student getStudent(Long studentNumber) {
+        return studentRepository.getStudentWithNoResidence(studentNumber);
     }
 
     /**
