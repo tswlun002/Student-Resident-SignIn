@@ -26,7 +26,7 @@ public class AddressService {
         Address address1 = repository.getAddress(address.getStreetNumber(),
                 address.getStreetName(),address.getSuburbs());
         if(address1==null) {
-            repository.save(address);
+            return repository.save(address);
 
         }
         return address1;

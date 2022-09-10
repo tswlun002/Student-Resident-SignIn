@@ -112,7 +112,7 @@ public class ResidentDepartmentService implements OnStudentChanges,OnChangesResi
      * @param block - blocks of  residence
      */
    private  void addNewDepartment(Residence residence,Set<Student>students, String resName, String block){
-
+       students.forEach(student -> student.setAddress(residence.getAddress()));
        ResidenceDepartment residenceDepartment = ResidenceDepartment.builder().students(students)
                .residence(residence).accommodation(resName + "," + block).build();
 
@@ -128,6 +128,7 @@ public class ResidentDepartmentService implements OnStudentChanges,OnChangesResi
      * @param group -  string name & blocks of the residence
      */
    private void addOnExistingDepartment(Residence residence,Set<Student>students,String group){
+       students.forEach(student -> student.setAddress(residence.getAddress()));
        students.forEach(
                student1->{
                    ResidenceDepartment residenceDepartment =addToStudentSet(student1,residence);
