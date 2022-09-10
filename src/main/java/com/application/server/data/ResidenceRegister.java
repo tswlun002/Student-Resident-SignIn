@@ -7,13 +7,12 @@ import java.util.Objects;
 
 @Getter
 @Setter
-@ToString
 @Entity
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name ="ResidentStudent" )
-public class ResidentStudent {
+@Table(name ="ResidenceRegister" )
+public class ResidenceRegister {
     @Id
     @Column(name = "id", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -21,18 +20,16 @@ public class ResidentStudent {
     private  int floor;
     private  String flat;
     private  String room;
-    @OneToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumns({
             @JoinColumn(name = "residenceId", referencedColumnName = "id"),
-            @JoinColumn(name = "blocks",referencedColumnName = "blocks"),
-            @JoinColumn(name = "residence",referencedColumnName = "residenceName")
+
     })
     private  Residence residence;
 
-    @ManyToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumns({
-            @JoinColumn(name="studentId", referencedColumnName="studentNumber"),
-            @JoinColumn(name="studentFullname", referencedColumnName="fullname")
+            @JoinColumn(name = "studentNumber",referencedColumnName = "studentNumber"),
     })
     private Student student;
 
@@ -40,8 +37,8 @@ public class ResidentStudent {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
-        ResidentStudent residentStudent = (ResidentStudent) o;
-        return id!=null && Objects.equals(id, residentStudent.id);
+        ResidenceRegister residenceRegister = (ResidenceRegister) o;
+        return id!=null && Objects.equals(id, residenceRegister.id);
     }
 
     @Override

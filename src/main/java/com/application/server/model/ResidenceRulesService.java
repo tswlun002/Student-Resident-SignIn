@@ -1,4 +1,5 @@
 package com.application.server.model;
+
 import com.application.server.data.ResidenceRules;
 import com.application.server.repository.ResidentRulesRepository;
 import lombok.AllArgsConstructor;
@@ -11,26 +12,58 @@ import org.springframework.stereotype.Service;
 @NoArgsConstructor
 @AllArgsConstructor
 @Service
-public class ResidenceRulesService {
+public class ResidenceRulesService implements OnChangesRules {
     @Autowired
     private ResidentRulesRepository repository;
     @Autowired
     private ResidenceService residenceService;
+
+
+    private void addRule(ResidenceRules rules){
+        if(rules != null){
+            repository.save(rules);
+        }
+    }
     /**
      * Remove Rules  by id
      * @param id - identity of the rules
      */
-    public void removeRules(Long id) {
+    private void removeRules(Long id) {
         repository.deleteById(id);
     }
 
-    public boolean updateRules(ResidenceRules residenceRules) {
-        boolean updated = false;
-        ResidenceRules rules =repository.getReferenceById(residenceRules.getId());
-        if(rules!=null) {
+    /**
+     * Update rules  existing rule
+     * Throw exception  if rules does not exist
+     * @param residenceRules with updated information
+     * @return true when rule is updated else false
+     */
+    private boolean updateRules(ResidenceRules residenceRules) {
+        try {
+            ResidenceRules rules =repository.getReferenceById(residenceRules.getId());
             repository.save(rules);
-            updated=true;
+        }catch (Exception e){
+            throw  new RuntimeException("Can not update rule\n" +e.getMessage());
         }
-        return  updated;
+
+        return true;
+    }
+
+    /**
+     * Notify when residence is added
+     * @param residenceRules added  or to be added
+     */
+    @Override
+    public void addedRules(ResidenceRules residenceRules) {
+        addRule(residenceRules);
+    }
+    /**
+     * Notify when residence is a deleted
+     *
+     * @param residenceRules deleted  or to be deleted
+     */
+    @Override
+    public void deletedRules(ResidenceRules residenceRules) {
+        if(residenceRules !=null) removeRules(residenceRules.getId());
     }
 }

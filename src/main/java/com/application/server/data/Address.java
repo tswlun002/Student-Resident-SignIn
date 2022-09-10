@@ -1,12 +1,8 @@
 package com.application.server.data;
 
-import com.application.visitor.data.Visitor;
 import lombok.*;
 import org.hibernate.Hibernate;
-
 import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 @Builder
@@ -26,8 +22,6 @@ public class Address {
     private  String suburbs;
     private  int postcode;
     private  String city;
-    @OneToMany(mappedBy = "address", fetch = FetchType.LAZY)
-    private List<Visitor> visitors = new ArrayList<>();
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
