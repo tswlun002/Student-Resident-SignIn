@@ -12,6 +12,7 @@ import lombok.Builder;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import java.util.List;
 
 @Builder
 @NoArgsConstructor
@@ -38,7 +39,7 @@ public class StudentGuestService {
             if (student1 != null) {
                  buildVisitor(student1,student1.getDepartment().getResidence().getAddress());
             }else {
-                Student student2 = getStudentStudents(student);
+                Student student2 = getStudent(student);
                 if(student2.getAddress()!=null) buildVisitor(student2,student2.getAddress());
                 else  throw  new RuntimeException("Guest/Visitor must have address");
             }
@@ -48,11 +49,27 @@ public class StudentGuestService {
     }
 
     /**
+     * Fetch all visitors
+     * @return list visitors
+     */
+    public List<Visitor> getAllVisitors(){
+        return  guestRepository.getAllVisitors();
+    }
+    /**
+     * Fetch all student visitors
+     * @return list student visitors
+     */
+    public List<Visitor> getStudentVisitors(String visitorType){
+        visitorType=visitorType.length()==0?"student":visitorType;
+        return  guestRepository.getsStudentVisitors(visitorType);
+    }
+
+    /**
      *  Get student  from students
      * @param student to  be fetched
      * @return student if found else null
      */
-    private Student getStudentStudents(Student student) {
+    private Student getStudent(Student student) {
         if(student==null)return null;
         return  studentService.getStudent(student.getStudentNumber());
     }
