@@ -59,9 +59,8 @@ public class StudentGuestService {
      * Fetch all student visitors
      * @return list student visitors
      */
-    public List<Visitor> getStudentVisitors(String visitorType){
-        visitorType=visitorType.length()==0?"student":visitorType;
-        return  guestRepository.getsStudentVisitors(visitorType);
+    public List<Visitor> getStudentVisitors(GuestType visitorType){
+        return  guestRepository.getsStudentVisitors(visitorType.name());
     }
 
     /**
@@ -95,14 +94,14 @@ public class StudentGuestService {
     private  void buildVisitor(Student student, Address address){
         Visitor visitor = Visitor.builder().idNumber(student.getStudentNumber())
                 .fullname(student.getFullName()).contact(student.getContact()).
-                visitorType(Student.class.getTypeName()).address(address).build();
+                visitorType(GuestType.STUDENT.name()).address(address).build();
         saveGuestAddress(address);
 
         if(isStored(visitor)) guestRepository.save(visitor);
 
     }
     private boolean isStored(Visitor visitor) {
-         return guestRepository.findByStudentNumber(visitor.getIdNumber())==null;
+         return guestRepository.findByIdNumber(visitor.getIdNumber())==null;
     }
 
     /**
@@ -130,11 +129,30 @@ public class StudentGuestService {
      */
     public Visitor deleteVisitor(Student student){
          if(student ==null)return  null;
-         Visitor visitor= guestRepository.findByStudentNumber(student.getStudentNumber());
-         if(visitor != null){
-             guestRepository.delete(visitor);
-         }
-         return visitor;
+        Visitor visitor= guestRepository.findByIdNumber(student.getStudentNumber());
+        return deleteVisitor(visitor);
+    }
+
+    /**
+     * Delete visitor
+     * @param visitor to be deleted
+     * @return deleted visitor
+     */
+    private  Visitor deleteVisitor(Visitor visitor){
+        if(visitor != null){
+            guestRepository.delete(visitor);
+        }
+        return visitor;
+    }
+
+
+    /**
+     * Delete all  guests with given type
+     * @param type is the guest type
+     */
+    public void deleteAll(GuestType type){
+        List<Visitor> visitor = guestRepository.getsStudentVisitors(type.name());
+        visitor.forEach(this::deleteVisitor);
     }
 
 

@@ -10,11 +10,9 @@ import java.util.List;
 public interface GuestRepository extends JpaRepository<Visitor, Long> {
 
     @Query("select v from Visitor v join fetch v.address where v.idNumber=:idNumber")
-    Visitor findByStudentNumber(long idNumber);
+    Visitor findByIdNumber(long idNumber);
     @Query("select v from Visitor v join fetch v.address")
-
     List<Visitor> getAllVisitors();
     @Query("select v from Visitor v join fetch v.address where v.visitorType=:visitorType")
-
     List<Visitor> getsStudentVisitors(String visitorType);
 }
