@@ -1,5 +1,6 @@
 package com.application.register.model;
 
+import com.application.register.data.Register;
 import com.application.register.data.VisitorsRegister;
 import com.application.register.repository.VisitorsRegisterRepository;
 import com.application.visitor.data.Visitor;
@@ -19,6 +20,7 @@ public class VisitorsRegisterService {
     @Autowired private VisitorsRegisterRepository repository;
     @Autowired private RegisterService registerService;
     private  List<VisitorsRegister> visitorsRegisterList;
+    @Autowired private  OnRegister onRegister;
 
     /**
      * Fetch all visitors register
@@ -55,6 +57,8 @@ public class VisitorsRegisterService {
     public  boolean addVisitor(VisitorsRegister visitorsRegister){
          if( visitorsRegister!=null && visitorsRegister.getRegister() !=null && visitorsRegister.getVisitor()!=null){
             if(! checkVisitorIsSigned(visitorsRegister.getVisitor())){
+                  Register register =onRegister.savedRegister(visitorsRegister.getRegister(),visitorsRegister.getVisitor());
+                  visitorsRegister.setRegister(register);
                   repository.save(visitorsRegister);
                   return  true;
             }else  return  false;

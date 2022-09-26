@@ -25,7 +25,7 @@ import java.time.LocalTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Service
-public class RegisterService {
+public class RegisterService  implements OnRegister{
 
     @Autowired private RegisterRepository registerRepository;
     @Autowired private StudentGuestService studentGuestService;
@@ -39,9 +39,19 @@ public class RegisterService {
     private Student host;
 
 
+    /**
+     * Sign in visitor to residence
+     * Check the signing in is authorised and valid
+     * by checking if signing has not elapsed, validate host and visitor
+     * @param studentHostId  is the student number of the hosting student
+     * @param visitor     to be signed in to the residence
+     * @param residenceName of the residence of the host
+     * @param residenceBlock of the residence where host stays
+     * @return true if signed in successfully else false
+     * @throws  RuntimeException if the signing in is not valid
+     */
     public boolean singIn(long studentHostId, Visitor visitor, String residenceName, String residenceBlock){
 
-        //Student host  = residenceRegisterService.getStudent()
 
         if(visitor==null) return false;
 
@@ -50,22 +60,35 @@ public class RegisterService {
         if(authorised) {
             Residence residence = residenceService.getResidence(residenceName,residenceBlock);
             Register register = Register.builder().hostStudent(host).numberVisitors(1).signingDate(LocalDate.now()).residence(residence).build();
-            Register register1 = saveRegister(register,visitor);
 
             Visitor visitor1 = GuestType.valueOf(visitor.getVisitorType())==GuestType.STUDENT?
                     studentGuestService.saveGuest(studentService.getStudent(visitor.getIdNumber())) :
                     relativeGuestService.saveGuest(visitor);
 
-            System.out.println(visitor1);
-            VisitorsRegister visitorsRegister = VisitorsRegister.builder().register(register1).visitor(visitor1)
+            VisitorsRegister visitorsRegister = VisitorsRegister.builder().register(register).visitor(visitor1)
                     .signInTime(time).signingStatus(SigningStatus.SIGNEDIN.name()).build();
 
             return visitorsRegisterService.addVisitor(visitorsRegister);
         }else throw  new RuntimeException(studentHostId +" is not authorised to sign in");
     }
 
+    /**
+     * Set the host  student
+     * @param host to be set
+     */
     private  void setHostStudent(Student host){
         this.host=host;
+    }
+
+    /**
+     * Save  visitor to register after visitor is successfully signed in
+     * @param register to signed customer
+     * @param visitor to be signed
+     * @return register of the visitor
+     */
+    @Override
+    public Register savedRegister(Register register, Visitor visitor) {
+            return saveRegister(register,visitor);
     }
 
     /**
@@ -87,7 +110,16 @@ public class RegisterService {
         }
     }
 
-
+    /**
+     * Authorise host and visitor signing in
+     * by  checking if it is a right time to sign visitor, check  if host is valid and visitor valid
+     * @param hostId student number of the host student  to be validated
+     * @param visitor to  be validated
+     * @param name of the residence of host student
+     * @param block of the residence of host student
+     * @param time  current time when visitor being signed in
+     * @return true if valid time to sign in , host is valid & authorised and visitor is valid else false
+     */
 
     private  boolean authoriseSigning(long hostId, Visitor visitor, String name, String block,LocalTime time){
         return withInSigningTime(name,block,time) &&
@@ -154,8 +186,9 @@ public class RegisterService {
 
         if(visitor==null)return false;
         return GuestType.valueOf(visitor.getVisitorType())==GuestType.STUDENT?
-                validateStudentGuest(visitor) : GuestType.valueOf(visitor.getVisitorType())==GuestType.RELATIVE
-                ?true & !checkVisitorAlreadySigned(visitor):noneTypeGuest();
+                validateStudentGuest(visitor) & checkVisitorIsNotAlreadySigned(visitor) :
+                GuestType.valueOf(visitor.getVisitorType())==GuestType.RELATIVE
+                ?true & checkVisitorIsNotAlreadySigned(visitor) :noneTypeGuest();
     }
 
     /**
@@ -163,8 +196,8 @@ public class RegisterService {
      * @param visitor to be checked
      * @return true visitor signed else false
      */
-    private boolean checkVisitorAlreadySigned(Visitor visitor){
-        return visitorsRegisterService.checkVisitorIsSigned(visitor);
+    private boolean checkVisitorIsNotAlreadySigned(Visitor visitor){
+        return !visitorsRegisterService.checkVisitorIsSigned(visitor);
     }
 
     /**
@@ -235,4 +268,6 @@ public class RegisterService {
         }
         return  isValid;
     }
+
+
 }
