@@ -1,7 +1,6 @@
 package com.application.register.model;
-import com.application.student.model.StudentService;
+import com.application.student.data.Student;
 import com.application.server.OnHostNotSignedOut;
-import com.application.server.Server;
 import com.application.visitor.model.Relative;
 import com.application.visitor.model.SchoolMate;
 import com.application.visitor.model.Visitor;
@@ -41,19 +40,19 @@ public class Register implements OnHostNotSignedOut, OnSigningOut{
      * Store signed item
      * First check if studentService is authorized to sign in and check if the visitor is valid
      * If all checks are true, sign is authorized and sign item is stored
-     * @param studentService - studentService object signed visitor
+     * @param student - studentService object signed visitor
      * @param visitor - visitor object  being signed
      * @param newItem - signed item
      * @return true visitor successful not already signed else false
      * @throws Exception -  authorization fails
      */
-    public  boolean  setSignInItem(StudentService studentService, Visitor visitor, Signing newItem) throws Exception {
+    public  boolean  setSignInItem(Student student, Visitor visitor, Signing newItem) throws Exception {
          server.getSignedItems(signInItems);
         boolean authenticated = false;
         if(!alreadySignedVisitor(newItem)) {
              authenticated =  (visitor instanceof Relative) ?
-                     server.authenticateAndAuthorizationRelative(studentService, (Relative) visitor) :
-                     server.authenticateAndAuthorizationSchoolmate(studentService, (SchoolMate) visitor);
+                     server.authenticateAndAuthorizationRelative(student, (Relative) visitor) :
+                     server.authenticateAndAuthorizationSchoolmate(student, (SchoolMate) visitor);
            if(authenticated)signInItems.add(newItem) ;
            else{
                try {
