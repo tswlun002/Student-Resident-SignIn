@@ -25,7 +25,7 @@ import java.time.LocalTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Service
-public class RegisterService  implements OnRegister{
+public class RegisterService implements OnSaveRegister {
 
     @Autowired private RegisterRepository registerRepository;
     @Autowired private StudentGuestService studentGuestService;
@@ -70,6 +70,59 @@ public class RegisterService  implements OnRegister{
 
             return visitorsRegisterService.addVisitor(visitorsRegister);
         }else throw  new RuntimeException(studentHostId +" is not authorised to sign in");
+    }
+    /**
+     * Sign out visitor from residence
+     * @param studentHostId of the host student
+     * @param visitorId  of the visitor that was signed in
+     * @param residenceName of residence where visitor was signed in
+     * @param block of residence where visitor was signed in
+     * @return true if signed out else false
+     * @throws  RuntimeException if signing out is not authorised
+     */
+    public boolean signOut(long studentHostId, long visitorId,String residenceName, String block){
+       boolean isAuthoriseSigningOut = authoriseSigningOut(studentHostId,visitorId,residenceName,block);
+       if(isAuthoriseSigningOut) return true;
+       else  throw  new RuntimeException("Not authorised to sign out");
+
+    }
+
+    /**
+     * authorise Sign out visitor from residence
+     * @param studentHostId of the host student
+     * @param visitorId  of the visitor that was signed in
+     * @param residenceName of residence where visitor was signed in
+     * @param block of residence where visitor was signed in
+     * @return true if signed out else false
+     * @throws  RuntimeException if signing records(register) is not found that contains host's id and visitor's id
+     */
+    private boolean authoriseSigningOut(long studentHostId, long visitorId,String residenceName, String block) {
+          if(withInSigningTime(residenceName,block,LocalTime.now())) {
+              Register register = registerRepository.getRegister(studentHostId, LocalDate.now());
+
+              if(register==null) throw   new RuntimeException("Can not find signing in records for host: "+studentHostId+
+                      " visitor: "+visitorId);
+
+              Visitor visitor = visitorsRegisterService.getSignedInVisitorRegister(visitorId);
+
+              if(visitor==null) throw  new RuntimeException("Can not sign out visitor "+visitorId+" because is signed out");
+
+              if( signVisitorOut(register,visitor)){
+                  register.setNumberVisitors(register.getNumberVisitors()-1);
+                   registerRepository.save(register);
+                   return true;
+              }
+
+          } return  false;
+    }
+
+    /**
+     * Sign out visitor
+     * @param register of the visitor
+     * @return  true if signed out else false
+     */
+    private  boolean signVisitorOut(Register register, Visitor visitor){
+         return visitorsRegisterService.signOut(register, visitor);
     }
 
     /**
@@ -188,7 +241,7 @@ public class RegisterService  implements OnRegister{
         return GuestType.valueOf(visitor.getVisitorType())==GuestType.STUDENT?
                 validateStudentGuest(visitor) & checkVisitorIsNotAlreadySigned(visitor) :
                 GuestType.valueOf(visitor.getVisitorType())==GuestType.RELATIVE
-                ?true & checkVisitorIsNotAlreadySigned(visitor) :noneTypeGuest();
+                ?validateRelativeGuestByRSAId(visitor.getIdNumber()) & checkVisitorIsNotAlreadySigned(visitor) :noneTypeGuest();
     }
 
     /**
@@ -267,6 +320,36 @@ public class RegisterService  implements OnRegister{
             }
         }
         return  isValid;
+    }
+
+    /**
+     * delete all the registers
+     * by  checking if all signings record are removed in visitor register
+     * @return  true if all register removed else false
+     */
+    public  boolean  deleteAll(){
+
+        if(visitorsRegisterService.deleteAll()) {
+            registerRepository.deleteAll();
+            return  true;
+        }
+        return false;
+    }
+
+    /**
+     * Delete Register of the given host
+     * @param hostId of the host student
+     * @return true if the register is deleted else false
+     */
+    public  boolean deleteRegister(long hostId){
+        Register register = registerRepository.getRegister(hostId,LocalDate.now());
+        if(register !=null){
+            if( visitorsRegisterService.deleteVisitorRegister(register)){
+                registerRepository.delete(register);
+                return  true;
+            }
+        }
+        return  false;
     }
 
 

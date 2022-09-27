@@ -10,7 +10,9 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import javax.persistence.PostPersist;
+import javax.persistence.PostRemove;
 import javax.persistence.PostUpdate;
+import java.time.LocalTime;
 import java.util.List;
 
 @Builder
@@ -20,12 +22,12 @@ public class VisitorsRegisterService {
     @Autowired private VisitorsRegisterRepository repository;
     @Autowired private RegisterService registerService;
     private  List<VisitorsRegister> visitorsRegisterList;
-    @Autowired private  OnRegister onRegister;
+    @Autowired private OnSaveRegister onSaveRegister;
 
     /**
-     * Fetch all visitors register
+     * Fetch all visitors register after each update
      */
-    @PostConstruct @PostUpdate @PostPersist
+    @PostConstruct @PostUpdate @PostPersist @PostRemove
     public void fetchVisitorsRegister(){
         visitorsRegisterList= repository.getVisitorsRegister();
     }
@@ -57,7 +59,7 @@ public class VisitorsRegisterService {
     public  boolean addVisitor(VisitorsRegister visitorsRegister){
          if( visitorsRegister!=null && visitorsRegister.getRegister() !=null && visitorsRegister.getVisitor()!=null){
             if(! checkVisitorIsSigned(visitorsRegister.getVisitor())){
-                  Register register =onRegister.savedRegister(visitorsRegister.getRegister(),visitorsRegister.getVisitor());
+                  Register register = onSaveRegister.savedRegister(visitorsRegister.getRegister(),visitorsRegister.getVisitor());
                   visitorsRegister.setRegister(register);
                   repository.save(visitorsRegister);
                   return  true;
@@ -76,5 +78,63 @@ public class VisitorsRegisterService {
         List<VisitorsRegister> registerList  = getVisitorsRegister(SigningStatus.SIGNEDIN);
         if(registerList==null || registerList.size()==0) return false;
         return  registerList.stream().anyMatch(register -> register.getVisitor().equals(visitor));
+    }
+
+    /**
+     * Fetch visitors who are still signed in
+     * @param visitorId  of the signed visitor
+     * @return signed visitor with given id else null if the visitor is not found
+     */
+    public Visitor getSignedInVisitorRegister(long visitorId) {
+       for(VisitorsRegister register: getVisitorsRegisterList()) {
+           if (register.getVisitor().getIdNumber() == visitorId &&
+                   SigningStatus.valueOf(register.getSigningStatus())==SigningStatus.SIGNEDIN )
+               return register.getVisitor();
+       }
+       return  null;
+    }
+
+    /**
+     * Sign out visitor
+     * @param register  of the visitor
+     * @return  true if signed out else false
+     */
+    public boolean signOut(Register register,Visitor visitor) {
+        for(VisitorsRegister register1: getVisitorsRegisterList()){
+             if (register.equals(register1.getRegister()) && register1.getVisitor().equals(visitor)) {
+                 register1.setSignOutTime(LocalTime.now());
+                 register1.setSigningStatus(SigningStatus.SIGNEDOUT.name());
+                 repository.save(register1);
+                 return true;
+             }
+        }
+        return  false;
+
+    }
+
+    /**
+     * Delete all the visitors
+     * @return true if all visitors are deleted else false
+     */
+    public boolean deleteAll() {
+        repository.deleteAll();
+        fetchVisitorsRegister();
+        return getVisitorsRegisterList().isEmpty();
+    }
+
+    /**
+     * Delete all visitors of the give register
+     * @param register of the visitors to be deleted
+     * @return true if visitors of the register are deleted else false
+     */
+    public boolean deleteVisitorRegister(Register register) {
+        boolean deleted  =false;
+        for (VisitorsRegister record: visitorsRegisterList) {
+            if(record.getRegister().equals(register)){
+                 repository.delete(record);
+                deleted= true;
+            }
+        }
+        return  deleted;
     }
 }

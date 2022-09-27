@@ -5,7 +5,7 @@ import com.application.visitor.data.Visitor;
 import org.springframework.stereotype.Service;
 
 @Service
-public interface OnRegister {
+public interface OnSaveRegister {
     /**
      * Save  visitor to register after visitor is successfully signed in
      * @param register to signed customer
@@ -13,4 +13,5 @@ public interface OnRegister {
      * @return register of the visitor
      */
       Register  savedRegister(Register register, Visitor visitor);
+
 }
