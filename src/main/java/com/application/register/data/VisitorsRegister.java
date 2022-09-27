@@ -14,7 +14,6 @@ import java.util.Objects;
 @Entity
 @Getter
 @Setter
-@ToString
 @Table(name = "VisitorsRegister")
 public class VisitorsRegister {
     @Id
@@ -44,5 +43,11 @@ public class VisitorsRegister {
     @Override
     public int hashCode() {
         return getClass().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "Time in: "+signInTime+", Time out: "+signOutTime+", status: "+signingStatus +", "+register.getHostStudent()+
+                ", "+visitor;
     }
 }

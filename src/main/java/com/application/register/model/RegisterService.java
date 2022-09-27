@@ -432,7 +432,7 @@ public class RegisterService implements OnSaveRegister {
      */
     public List<VisitorsRegister> getAllVisitorsByDate(SigningStatus status, LocalDate date){
         return  visitorsRegisterService.getVisitorsRegister(status).stream().filter(register ->
-                register.getRegister().getSigningDate()==date).toList();
+                register.getRegister().getSigningDate().equals(date)).toList();
     }
 
     /**
@@ -441,7 +441,7 @@ public class RegisterService implements OnSaveRegister {
      */
     public List<VisitorsRegister> getAllVisitorsByDate(LocalDate date){
         return  visitorsRegisterService.getVisitorsRegisterList().stream().filter(register ->
-                register.getRegister().getSigningDate()==date).toList();
+                register.getRegister().getSigningDate().equals(date)).toList();
     }
 
 

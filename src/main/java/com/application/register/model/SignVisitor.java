@@ -1,110 +1,64 @@
 package com.application.register.model;
-import com.application.student.data.Student;
-import com.application.student.model.StudentService;
-import com.application.visitor.model.Address;
-import com.application.visitor.model.Relative;
-import com.application.visitor.model.SchoolMate;
-import com.application.visitor.model.Visitor;
+
+import com.application.ResidenceData;
+import com.application.register.controller.RegisterController;
+import com.application.server.data.Address;
+import com.application.visitor.model.GuestType;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import java.sql.Date;
-import java.sql.Time;
+import org.springframework.stereotype.Component;
+
+import javax.annotation.PostConstruct;
 import java.time.LocalDate;
 import java.util.Scanner;
 
-@Service
+@Component
 public class SignVisitor {
-    private  long hostId;
-    private  long visitorId;
-    private  String hostName;
-    private  String visitName;
-    private  String hostContact;
-    private  String visitorContact;
-    private  String roomNumber;
-    private String residentVisitor;
-    private     Address address ;
-    private  Visitor visitor;
+    private     Address visitorAddress;
 
     @Autowired
-    private  Student student;
+    private RegisterController registerController;
 
-    public  Visitor getVisitor(){
-        return  visitor;
-    }
-    public Address getAddress() {
-        return address;
-    }
-
-    public long getHostId() {
-        return hostId;
-    }
-
-    public long getVisitorId() {
-        return visitorId;
-    }
-
-    public String getHostName() {
-        return hostName;
-    }
-
-    public String getVisitName() {
-        return visitName;
-    }
-
-    public String getHostContact() {
-        return hostContact;
-    }
-
-    public String getVisitorContact() {
-        return visitorContact;
-    }
-
-    public String getRoomNumber() {
-        return roomNumber;
-    }
-
-    public String getResidentVisitor() {
-        return residentVisitor;
-    }
 
     /***
      * Construct to Start sign process
-
-     * @param schoolMate - SchoolMate object
-     * @param relative - relative StudentService
-     * @param register - Register Object
-     * @throws Throwable - throw when create visitor that not Relative or SchoolMate type
      */
-    public  SignVisitor(SchoolMate schoolMate, Relative relative, Register register) throws Throwable {
+    @PostConstruct
+    public void  signVisitor(){
+        ResidenceData.residenceName="Forest Hill";
         Scanner keyboard = new Scanner(System.in);
-        while (true) {
+        boolean quit =false;
+        while (!quit) {
             System.out.println("""
                     ///////////////////////////////////////////////////////////////////////////
                     			             SIGN IN OR OUT VISITOR                          \s
                     //////////////////////////////////////////////////////////////////////////""");
+            System.out.println("Enter your residence block");
+            ResidenceData.residenceBlock= keyboard.nextLine();
 
             //prompt sign
             System.out.println("Enter IN to sign in or OUT  to sign out or Quit to quit");
+
             String signingType = keyboard.nextLine();
             if (signingType.equalsIgnoreCase("in")) {
-                boolean siginedIn = signIn(keyboard, register, student, schoolMate,relative);
+                SigningStatus status = SigningStatus.SIGNEDIN;
+                boolean siginedIn = signIn(keyboard);
                 if (siginedIn) {
-                    register.showAllVisitors();
+                    registerController.showAllVisitors();
                     System.out.println("Successful signed in");
                 }
                 else System.out.println("Can't sign in");
             } else if (signingType.equalsIgnoreCase("out")) {
-                boolean signedOut = signOut(keyboard, register);
+                boolean signedOut = signOut(keyboard);
                 if (signedOut) System.out.println("Successful signed out");
                 else System.out.println("Can't find match , you can't sign out ");
 
-            } else if (signingType.equalsIgnoreCase("quit")) break;
-            final int[] count = {0};
-            System.out.println("------------------Signed GuestType-------------------------");
-            register.getSignInItems().forEach(signInItems -> {
-                System.out.format("Item %d :%s\n", count[0], signInItems.toString());
-                count[0] += 1;
-            });
+            } else if (signingType.equalsIgnoreCase("quit")) {
+                quit=true;
+            }
+
+            //System.out.println("**********************************************************");
+            registerController.showAllVisitors();
+
 
         }
 
@@ -187,7 +141,7 @@ public class SignVisitor {
         String line ="";
         while (true){
               line  = keyboard.nextLine();
-            if (line.split(",").length == 4){
+            if (line.split(",").length == 5){
                  line.split(",");
                  break;
             }
@@ -199,117 +153,82 @@ public class SignVisitor {
     /***
      * Take details of the  StudentService and Visitor
      * @param keyboard - Scanner object for prompting user to enter details
-     * @param register - Register  object
-     * @param student - StudentService object
-     * @param schoolMate - Schoolmate object
-     * @param relative  - Relative object
      * @return true if StudentService successful signed in visitor else false
      * @throws Throwable  - when try to sign visitor which not Relative type or SchoolMate type
      */
-    public boolean  signIn(Scanner keyboard, Register register, Student student, SchoolMate schoolMate, Relative relative) throws Throwable {
+    public boolean  signIn(Scanner keyboard)  {
 
         // StudentService details
-        idValidation("Enter  your student number (integer)", keyboard);
-        this.hostId = Long.parseLong(keyboard.nextLine().trim());
-        System.out.println("Enter Enter your fullName");
-        this.hostName = keyboard.nextLine();
-        System.out.println("Enter Enter your contact");
-        this.hostContact = keyboard.nextLine();
-        System.out.println("Enter Enter your roomNumber (block flat room)");
-        this.roomNumber = keyboard.nextLine();
+        idValidation("Enter host student number (integer)", keyboard);
+        long hostId = Long.parseLong(keyboard.nextLine().trim());
+        System.out.println("Enter host fullName");
+        String hostName = keyboard.nextLine();
         System.out.println("Enter UCT if visitor is a student else relative");
         String visitorType = keyboard.nextLine();
 
+        long visitorId;
+        String visitName;
+        String visitorContact;
+        GuestType guestType;
         if (visitorType.equalsIgnoreCase("UCT")) {
             // UCT Visitor details
-            idValidation("Enter  visitor student number (integer)", keyboard);
-            this.visitorId = Long.parseLong(keyboard.nextLine().trim());
+            guestType = GuestType.STUDENT;
+            idValidation("Enter  visitor student number ", keyboard);
+            visitorId = Long.parseLong(keyboard.nextLine().trim());
             System.out.println("Enter Enter visitor fullName");
-            this.visitName = keyboard.nextLine();
+            visitName = keyboard.nextLine();
             System.out.println("Enter Enter visitor contact");
-            this.visitorContact = keyboard.nextLine();
-            System.out.println("Enter Enter visitor resident");
-            this.residentVisitor = keyboard.nextLine();
-            this.visitor = schoolMate;
+            visitorContact = keyboard.nextLine();
 
         } else {
+            guestType =GuestType.RELATIVE;
             idValidation("Enter  visitor ID number (integer)", keyboard);
-            this.visitorId = Long.parseLong(keyboard.nextLine().trim());
-            validateID(keyboard,this.visitorId);
+            visitorId = Long.parseLong(keyboard.nextLine().trim());
+            validateID(keyboard, visitorId);
             System.out.println("Enter Enter visitor fullName");
-            this.visitName = keyboard.nextLine();
+            visitName = keyboard.nextLine();
             System.out.println("Enter Enter visitor contact");
-            this.visitorContact = keyboard.nextLine();
-            String[] addressDetails = addressValidation("Enter Enter address( street, suburb,postcode, city. separated by comma", keyboard);
-            this.address = new Address(addressDetails[0], addressDetails[1], Integer.parseInt(addressDetails[2].trim()),
-                    addressDetails[3]);
-            this.visitor =relative;
+            visitorContact = keyboard.nextLine();
+            String[] addressDetails = addressValidation("Enter Enter address( streetNumber,streetName, suburb" +
+                    ",postcode, city. separated by comma", keyboard);
+           this.visitorAddress=
+                   makeAddress(addressDetails[0], addressDetails[1],addressDetails[2], Integer.parseInt(addressDetails[3].trim()),
+                    addressDetails[4]);
         }
-        if( visitor instanceof  SchoolMate) {
-            setHostDetails(student);
-            setDetailsVisitor(schoolMate);
-            return register.setSignInItem(student, schoolMate,
-                    new Signing(new Date(System.currentTimeMillis()), new Time(System.currentTimeMillis()), student.getStudentNumber(),
-                            ((SchoolMate) visitor).getStudentNumber(), student.getAccommodation(), "Sign In")
+        if(guestType ==GuestType.STUDENT) {
+            return   registerController.signInStudent(
+                    hostId,ResidenceData.residenceName,ResidenceData.residenceBlock,
+                    visitorId, visitName, visitorContact
             );
         }
-        else if (visitor != null) {
-            setHostDetails(student);
-            setDetailsVisitor(relative);
-            return register.setSignInItem(student, relative,
-                    new Signing(new Date(System.currentTimeMillis()), new Time(System.currentTimeMillis()), student.getStudentNumber(),
-                            ((Relative) visitor).getIdNumber(), student.getAccommodation(), "Sign In")
-            );
+        else if (guestType ==GuestType.RELATIVE) {
+             return registerController.signInRelativeGuests(
+                     hostId,ResidenceData.residenceName,ResidenceData.residenceBlock,
+                     visitName, visitorId, visitorContact,visitorAddress
+
+             );
         }
         else{
 
-            throw  new Exception("When sign in, visitor must be either relative(friend, anyone) or schoolmate").fillInStackTrace();
+            throw  new RuntimeException("When sign in, visitor must be either relative(friend, anyone) or schoolmate");
         }
 
     }
-
+   com.application.server.data.Address makeAddress(String streetNumber,
+                                                   String streetName, String suburbs, int postalCode, String city) {
+      return com.application.server.data.Address.builder().streetNumber(streetNumber).streetName(streetName).suburbs(suburbs)
+               .postcode(postalCode).city(city).build();
+   }
     /***
      *  Sign out visitor
-     * @param register  -  object of register we sign out on
-     * @return
+     *   @return
      */
-    public   boolean signOut(Scanner keyboard, Register register) throws Exception {
+    public   boolean signOut(Scanner keyboard) {
         idValidation("Enter  your student number (integer)",keyboard);
         long hostId  = Long.parseLong(keyboard.nextLine().trim());
         idValidation("Enter  visitor student/ID number (integer)",keyboard);
         long  visitorId = Long.parseLong(keyboard.nextLine().trim());
-        Date date  = new Date(System.currentTimeMillis());
-        return register.signingOutVisitor(hostId,visitorId,date);
-    }
-
-    /**
-     * Set the details of the StudentService to studentService  object
-     * @param student - is the StudentService object
-     */
-    private   void setHostDetails(Student student){
-        student.setStudentNumber(getHostId());
-        student.setFullName(getHostName());
-        student.setContact(getHostContact());
-        student.setAccommodation(getRoomNumber());
-    }
-
-    /**
-     * Set details to Schoolmate/Relative    object
-     * @param myVisitor - is the Schoolmate/Relative visitor object
-     */
-    private  void setDetailsVisitor(Visitor myVisitor){
-        if(myVisitor instanceof SchoolMate schoolMate){
-            schoolMate.setStudentNumber(getVisitorId());
-            schoolMate.setFullName(getVisitName());
-            schoolMate.setContact(getVisitorContact());
-            schoolMate.setResident(getResidentVisitor());
-        }
-        else if( myVisitor instanceof  Relative relative){
-            relative.setIdNumber(getVisitorId());
-            relative.setFullName(getVisitName());
-            relative.setContact(getVisitorContact());
-            relative.setAddress(address);
-        }
+        return  registerController.signOut(hostId,ResidenceData.residenceName,ResidenceData.residenceBlock,visitorId);
     }
 
 
