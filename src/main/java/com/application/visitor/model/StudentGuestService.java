@@ -31,21 +31,21 @@ public class StudentGuestService {
      * Save Guest
      * throw runtimeException if the student is not found at any residence
      * @param student - guest being saved
+     * @return  student visitor
      */
-    public  Student  saveGuest(Student student) {
+    public  Visitor  saveGuest(Student student) {
 
         if ((student=validateStudent(student))!=null){
                 Student student1 = getStudentFromDepartment(student);
             if (student1 != null) {
-                 buildVisitor(student1,student1.getDepartment().getResidence().getAddress());
+                 return buildVisitor(student1,student1.getDepartment().getResidence().getAddress());
             }else {
                 Student student2 = getStudent(student);
-                if(student2.getAddress()!=null) buildVisitor(student2,student2.getAddress());
-                else  throw  new RuntimeException("Guest/Visitor must have address");
+                if(student2.getAddress()!=null) return buildVisitor(student2,student2.getAddress());
+                else  throw  new RuntimeException("Visitor must have address");
             }
        } else throw  new RuntimeException("Student is  not valid!");
 
-        return student;
     }
 
     /**
@@ -91,18 +91,18 @@ public class StudentGuestService {
      * @param student  is the guest to save
      * @param address of the student guest
      */
-    private  void buildVisitor(Student student, Address address){
+    private  Visitor buildVisitor(Student student, Address address){
         Visitor visitor = Visitor.builder().idNumber(student.getStudentNumber())
                 .fullname(student.getFullName()).contact(student.getContact()).
                 visitorType(GuestType.STUDENT.name()).address(address).build();
         saveGuestAddress(address);
 
-        if(isStored(visitor)) guestRepository.save(visitor);
+        Visitor visitor1 =guestRepository.findByIdNumber(visitor.getIdNumber());
 
+        if(visitor1==null) return  guestRepository.save(visitor);
+        return visitor1;
     }
-    private boolean isStored(Visitor visitor) {
-         return guestRepository.findByIdNumber(visitor.getIdNumber())==null;
-    }
+
 
     /**
      * Saves guest address

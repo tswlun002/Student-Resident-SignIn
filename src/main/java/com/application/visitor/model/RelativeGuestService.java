@@ -19,19 +19,27 @@ import java.util.List;
 public class RelativeGuestService {
     @Autowired private GuestRepository guestRepository;
     @Autowired private AddressService addressService;
-    public boolean saveGuest(Visitor visitor){
-        if(visitor==null)return false;
+
+    /**
+     * Save  relative guest
+     * By first Check if the guest relative type
+     * And check if visitor is not yet saved
+     * If all  condition are true, save guest
+     * @param visitor is the relative guest to be saved
+     * @return true if visitor is successfully saved else false
+     */
+    public Visitor saveGuest(Visitor visitor){
+        if(visitor==null)return null;
         if(checkVisitorType(visitor)) {
-            boolean isSaved = false;
             Visitor visitor1 = getVisitor(visitor);
             if (visitor1 == null && visitor.getAddress() != null) {
                 Address address = addressService.saveAddress(visitor.getAddress());
                 visitor.setAddress(address);
-                guestRepository.save(visitor);
-                isSaved = true;
+                return guestRepository.save(visitor);
+
             }
-            return isSaved;
-        }else return false;
+            return visitor1;
+         }else  throw  new RuntimeException("Only relative visitor are allowed here");
     }
 
     /**
