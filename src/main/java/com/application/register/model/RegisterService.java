@@ -18,8 +18,13 @@ import lombok.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
+import javax.persistence.PostPersist;
+import javax.persistence.PostRemove;
+import javax.persistence.PostUpdate;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 
 @Builder
 @AllArgsConstructor
@@ -37,6 +42,7 @@ public class RegisterService implements OnSaveRegister {
 
     @Autowired private VisitorsRegisterService visitorsRegisterService;
     private Student host;
+    private List<Register> registers;
 
 
     /**
@@ -98,7 +104,7 @@ public class RegisterService implements OnSaveRegister {
      */
     private boolean authoriseSigningOut(long studentHostId, long visitorId,String residenceName, String block) {
           if(withInSigningTime(residenceName,block,LocalTime.now())) {
-              Register register = registerRepository.getRegister(studentHostId, LocalDate.now());
+              Register register = registerRepository.getRegisterByRangeVisitors(studentHostId, LocalDate.now(),1);
 
               if(register==null) throw   new RuntimeException("Can not find signing in records for host: "+studentHostId+
                       " visitor: "+visitorId);
@@ -241,9 +247,19 @@ public class RegisterService implements OnSaveRegister {
         return GuestType.valueOf(visitor.getVisitorType())==GuestType.STUDENT?
                 validateStudentGuest(visitor) & checkVisitorIsNotAlreadySigned(visitor) :
                 GuestType.valueOf(visitor.getVisitorType())==GuestType.RELATIVE
-                ?validateRelativeGuestByRSAId(visitor.getIdNumber()) & checkVisitorIsNotAlreadySigned(visitor) :noneTypeGuest();
+                ?validId(visitor) & checkVisitorIsNotAlreadySigned(visitor) :noneTypeGuest();
     }
 
+    /**
+     * Validate  RSA id of the visitor by id number
+     * @param visitor to be validated
+     * @return true if the id is valid
+     * @throws  RuntimeException if the id is not valid
+     */
+    private  boolean validId(Visitor visitor){
+        if(validateRelativeGuestByRSAId(visitor.getIdNumber()))return true;
+        throw  new RuntimeException("Visitor identity is not valid , ID: "+visitor.getIdNumber());
+    }
     /**
      * check if visitor is signed
      * @param visitor to be checked
@@ -351,6 +367,83 @@ public class RegisterService implements OnSaveRegister {
         }
         return  false;
     }
+
+    /**
+     * Fetch all registers after every update
+     */
+    @PostRemove @PostPersist@PostConstruct @PostUpdate
+    public  void fetchAllRegister(){
+        this.registers=  registerRepository.getRegister();
+    }
+
+    /**
+     * @return all register available else null if no register
+     */
+    public  List<Register> getAllRegister(){
+        return this.registers;
+    }
+
+    /**
+     * @param hostId of the student host
+     * @return list register with matching id
+     */
+    public  List<Register> getRegisterByHostId(long hostId){
+        return this.registers.stream().filter(register ->
+                register.getHostStudent().getStudentNumber()==hostId).toList();
+    }
+
+    /**
+     * @param date of the register was made
+     * @return list of all registers made on the given date
+     */
+    public  List<Register> getRegisterByDate(LocalDate date){
+        return this.registers.stream().filter(register ->
+                register.getSigningDate().equals(date)).toList();
+    }
+
+    /**
+     * @param numberVisitorMin is the minimum number of visitor
+     * @return list of register that has minimum number visitors
+     */
+    public  List<Register> getRangeRegisterByNumberVisitor(long numberVisitorMin){
+        return this.registers.stream().filter(register ->
+                register.getNumberVisitors()>=numberVisitorMin).toList();
+    }
+
+    /**
+     * @return all visitor register (signing time, visitor id, status of visitor, residence, register)
+     */
+    public List<VisitorsRegister> getAllVisitors(){
+        return  visitorsRegisterService.getVisitorsRegisterList();
+    }
+
+    /**
+     * @param status of the visitor ( signed in or signed out)
+     * @return all visitor register (signing time, visitor id, status of visitor, residence, register)
+     */
+    public List<VisitorsRegister> getAllVisitors(SigningStatus status){
+        return  visitorsRegisterService.getVisitorsRegister(status);
+    }
+
+    /***
+     * @param status  of the visitor ( signed in or signed out)
+     * @param date  is the date of signing were done
+     * @return  all visitor register (signing time, visitor id, status of visitor, residence, register)
+     */
+    public List<VisitorsRegister> getAllVisitorsByDate(SigningStatus status, LocalDate date){
+        return  visitorsRegisterService.getVisitorsRegister(status).stream().filter(register ->
+                register.getRegister().getSigningDate()==date).toList();
+    }
+
+    /**
+     * @param date  is the date of signing were done
+     * @return  all visitor register (signing time, visitor id, status of visitor, residence, register)
+     */
+    public List<VisitorsRegister> getAllVisitorsByDate(LocalDate date){
+        return  visitorsRegisterService.getVisitorsRegisterList().stream().filter(register ->
+                register.getRegister().getSigningDate()==date).toList();
+    }
+
 
 
 }

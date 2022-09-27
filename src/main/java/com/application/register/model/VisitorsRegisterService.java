@@ -101,7 +101,10 @@ public class VisitorsRegisterService {
      */
     public boolean signOut(Register register,Visitor visitor) {
         for(VisitorsRegister register1: getVisitorsRegisterList()){
-             if (register.equals(register1.getRegister()) && register1.getVisitor().equals(visitor)) {
+             if (register.equals(register1.getRegister())
+                     && register1.getVisitor().equals(visitor)
+                     && SigningStatus.valueOf(register1.getSigningStatus())==SigningStatus.SIGNEDIN)
+             {
                  register1.setSignOutTime(LocalTime.now());
                  register1.setSigningStatus(SigningStatus.SIGNEDOUT.name());
                  repository.save(register1);

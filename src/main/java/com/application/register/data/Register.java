@@ -1,13 +1,11 @@
 package com.application.register.data;
+
 import com.application.server.data.Residence;
 import com.application.student.data.Student;
-import com.application.visitor.data.Visitor;
 import lombok.*;
 import org.hibernate.Hibernate;
-import org.springframework.lang.Nullable;
 import javax.persistence.*;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.Objects;
 
 @Builder
@@ -28,7 +26,7 @@ public class Register {
     @JoinColumn(name = "residenceId")
     private Residence residence;
     @Column(name = "date")
-    @Nullable
+    @NonNull
     private LocalDate  signingDate;
     @Column(name = "numberVisitors")
     private  int numberVisitors;
