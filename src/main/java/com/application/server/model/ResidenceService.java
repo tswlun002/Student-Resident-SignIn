@@ -159,4 +159,16 @@ public class ResidenceService{
             onChangesRules.deletedRules(rules);
         }
     }
+
+    /**
+     * Fetch rules of the residence
+     * @param name of the residence
+     * @param block of the residence
+     * @return rules of the res if the residence exists else null
+     */
+    public ResidenceRules getRulesResidence(String name , String block) {
+        Residence residence = getResidence(name, block);
+        if(residence !=null)return  residence.getResidenceRules();
+        else throw new RuntimeException("Can not find residence.");
+    }
 }

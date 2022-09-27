@@ -20,13 +20,13 @@ public class AddressService {
      * Save given  address
      * check first if not already saved
      * @param address - address being saved
-     * @return true if address saved  else false
+     * @return new address if address saved  else address already stored
      */
     public Address saveAddress(Address address){
         Address address1 = repository.getAddress(address.getStreetNumber(),
                 address.getStreetName(),address.getSuburbs());
         if(address1==null) {
-            repository.save(address);
+            return repository.save(address);
 
         }
         return address1;

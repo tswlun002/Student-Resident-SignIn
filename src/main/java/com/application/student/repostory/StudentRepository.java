@@ -17,6 +17,11 @@ public interface StudentRepository extends JpaRepository <Student,Long>{
     <S extends Student> S save(S entity);
     @Override
     Student getReferenceById(Long aLong);
-   @Query("select s from Student s where s.accommodation<>'no'")
+   @Query("select s from Student s where s.accommodation<>'no' and s.department is  null")
     List<Student> getStudentsWithResOffer();
+    @Query("select s from Student s join fetch s.department d join fetch s.address where s.studentNumber=:studentNumber")
+    Student getStudent(Long studentNumber);
+    @Query("select s from Student s join fetch s.address" +
+            "  left join fetch s.department d where s.studentNumber=:studentNumber")
+    Student getStudentWithNoResidence(Long studentNumber);
 }

@@ -1,9 +1,11 @@
 package com.application.register.model;
+import com.application.student.data.Student;
 import com.application.student.model.StudentService;
 import com.application.visitor.model.Address;
 import com.application.visitor.model.Relative;
 import com.application.visitor.model.SchoolMate;
 import com.application.visitor.model.Visitor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.sql.Date;
 import java.sql.Time;
@@ -22,6 +24,9 @@ public class SignVisitor {
     private String residentVisitor;
     private     Address address ;
     private  Visitor visitor;
+
+    @Autowired
+    private  Student student;
 
     public  Visitor getVisitor(){
         return  visitor;
@@ -64,13 +69,13 @@ public class SignVisitor {
 
     /***
      * Construct to Start sign process
-     * @param studentService - StudentService object
+
      * @param schoolMate - SchoolMate object
      * @param relative - relative StudentService
      * @param register - Register Object
      * @throws Throwable - throw when create visitor that not Relative or SchoolMate type
      */
-    public  SignVisitor(StudentService studentService, SchoolMate schoolMate, Relative relative, Register register) throws Throwable {
+    public  SignVisitor(SchoolMate schoolMate, Relative relative, Register register) throws Throwable {
         Scanner keyboard = new Scanner(System.in);
         while (true) {
             System.out.println("""
@@ -82,7 +87,7 @@ public class SignVisitor {
             System.out.println("Enter IN to sign in or OUT  to sign out or Quit to quit");
             String signingType = keyboard.nextLine();
             if (signingType.equalsIgnoreCase("in")) {
-                boolean siginedIn = signIn(keyboard, register, studentService, schoolMate,relative);
+                boolean siginedIn = signIn(keyboard, register, student, schoolMate,relative);
                 if (siginedIn) {
                     register.showAllVisitors();
                     System.out.println("Successful signed in");
@@ -95,7 +100,7 @@ public class SignVisitor {
 
             } else if (signingType.equalsIgnoreCase("quit")) break;
             final int[] count = {0};
-            System.out.println("------------------Signed Visitors-------------------------");
+            System.out.println("------------------Signed GuestType-------------------------");
             register.getSignInItems().forEach(signInItems -> {
                 System.out.format("Item %d :%s\n", count[0], signInItems.toString());
                 count[0] += 1;
@@ -195,13 +200,13 @@ public class SignVisitor {
      * Take details of the  StudentService and Visitor
      * @param keyboard - Scanner object for prompting user to enter details
      * @param register - Register  object
-     * @param studentService - StudentService object
+     * @param student - StudentService object
      * @param schoolMate - Schoolmate object
      * @param relative  - Relative object
      * @return true if StudentService successful signed in visitor else false
      * @throws Throwable  - when try to sign visitor which not Relative type or SchoolMate type
      */
-    public boolean  signIn(Scanner keyboard, Register register, StudentService studentService, SchoolMate schoolMate, Relative relative) throws Throwable {
+    public boolean  signIn(Scanner keyboard, Register register, Student student, SchoolMate schoolMate, Relative relative) throws Throwable {
 
         // StudentService details
         idValidation("Enter  your student number (integer)", keyboard);
@@ -241,19 +246,19 @@ public class SignVisitor {
             this.visitor =relative;
         }
         if( visitor instanceof  SchoolMate) {
-            setHostDetails(studentService);
+            setHostDetails(student);
             setDetailsVisitor(schoolMate);
-            return register.setSignInItem(studentService, schoolMate,
-                    new Signing(new Date(System.currentTimeMillis()), new Time(System.currentTimeMillis()), studentService.getHostNumber(),
-                            ((SchoolMate) visitor).getStudentNumber(), studentService.getAccommodation(), "Sign In")
+            return register.setSignInItem(student, schoolMate,
+                    new Signing(new Date(System.currentTimeMillis()), new Time(System.currentTimeMillis()), student.getStudentNumber(),
+                            ((SchoolMate) visitor).getStudentNumber(), student.getAccommodation(), "Sign In")
             );
         }
         else if (visitor != null) {
-            setHostDetails(studentService);
+            setHostDetails(student);
             setDetailsVisitor(relative);
-            return register.setSignInItem(studentService, relative,
-                    new Signing(new Date(System.currentTimeMillis()), new Time(System.currentTimeMillis()), studentService.getHostNumber(),
-                            ((Relative) visitor).getIdNumber(), studentService.getAccommodation(), "Sign In")
+            return register.setSignInItem(student, relative,
+                    new Signing(new Date(System.currentTimeMillis()), new Time(System.currentTimeMillis()), student.getStudentNumber(),
+                            ((Relative) visitor).getIdNumber(), student.getAccommodation(), "Sign In")
             );
         }
         else{
@@ -279,13 +284,13 @@ public class SignVisitor {
 
     /**
      * Set the details of the StudentService to studentService  object
-     * @param studentService - is the StudentService object
+     * @param student - is the StudentService object
      */
-    private   void setHostDetails(StudentService studentService){
-        studentService.setHostNumber(getHostId());
-        studentService.setFullName(getHostName());
-        studentService.setContact(getHostContact());
-        studentService.setAccommodation(getRoomNumber());
+    private   void setHostDetails(Student student){
+        student.setStudentNumber(getHostId());
+        student.setFullName(getHostName());
+        student.setContact(getHostContact());
+        student.setAccommodation(getRoomNumber());
     }
 
     /**

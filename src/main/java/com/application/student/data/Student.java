@@ -1,4 +1,5 @@
 package com.application.student.data;
+import com.application.server.data.Address;
 import com.application.server.data.ResidenceDepartment;
 import lombok.*;
 import org.hibernate.Hibernate;
@@ -27,6 +28,9 @@ public class Student  implements Serializable  {
     @ManyToOne
     @JoinColumn(name="residence_departmentId",referencedColumnName = "id")
     private ResidenceDepartment department;
+    @ManyToOne
+    @JoinColumn(name = "addressId", referencedColumnName = "id")
+    private Address address;
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

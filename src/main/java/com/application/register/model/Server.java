@@ -1,4 +1,5 @@
-package com.application.server;
+package com.application.register.model;
+import com.application.server.ResidentSignRules;
 import com.application.server.model.ResidenceRegisterService;
 import com.application.student.data.Student;
 import com.application.student.model.StudentService;
@@ -24,7 +25,7 @@ public class Server implements OnSignings {
     private final ResidentDB residentDB;
 
     private final School school;
-    private  ResidentSignRules residentSignRules;
+    private ResidentSignRules residentSignRules;
 
 
 

@@ -9,7 +9,7 @@ import java.util.List;
 public interface ResidenceRepository  extends JpaRepository<Residence,Long> {
     @Query("select r from Residence r join fetch r.address where r.residenceName=:name")
     List<Residence> getResidenceForestHill(String name);
-    @Query("select r from Residence r  join fetch r.address " +
+    @Query("select r from Residence r  join fetch r.address  join fetch r.residenceRules rr " +
             "where r.residenceName=:name and r.blocks =:block")
     Residence getResidence(String name, String block);
 }
