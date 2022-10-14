@@ -24,4 +24,6 @@ public interface StudentRepository extends JpaRepository <Student,Long>{
     @Query("select s from Student s join fetch s.address" +
             "  left join fetch s.department d where s.studentNumber=:studentNumber")
     Student getStudentWithNoResidence(Long studentNumber);
+   @Query("select s from Student s join fetch s.address a left join fetch s.department d")
+    List<Student> getAllStudent();
 }

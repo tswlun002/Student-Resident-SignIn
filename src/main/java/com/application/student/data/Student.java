@@ -4,6 +4,7 @@ import com.application.server.data.ResidenceDepartment;
 import lombok.*;
 import org.hibernate.Hibernate;
 import javax.persistence.*;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -14,17 +15,21 @@ import java.util.Objects;
 @Builder
 @Getter
 @Setter
+@ToString
 @Table(name = "Student")
-public class Student  implements Serializable  {
+public class Student  implements Serializable {
     @Id
     private Long studentNumber;
     @Column(name="fullname", nullable = false)
     @NonNull
+    @Size(min = 3, max = 50, message = "Fullname must contain 3 to 50 characters.")
     private  String fullName;
+    @Size(min = 10, max = 10, message = "Phone number must contain 10 digit.")
     @Column(name = "contact",nullable = false)
     private String contact;
     @Column(name="accommodation", nullable = false)
     private  String accommodation;
+    @ToString.Exclude
     @ManyToOne
     @JoinColumn(name="residence_departmentId",referencedColumnName = "id")
     private ResidenceDepartment department;
@@ -43,13 +48,4 @@ public class Student  implements Serializable  {
         return getClass().hashCode();
     }
 
-    @Override
-    public String toString() {
-        return "Student{" +
-                "studentNumber=" + studentNumber +
-                ", fullName='" + fullName + '\'' +
-                ", contact='" + contact + '\'' +
-                ", accommodation='" + accommodation +
-                '}';
-    }
 }
