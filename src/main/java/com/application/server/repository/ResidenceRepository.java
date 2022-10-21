@@ -12,4 +12,7 @@ public interface ResidenceRepository  extends JpaRepository<Residence,Long> {
     @Query("select r from Residence r  join fetch r.address  join fetch r.residenceRules rr " +
             "where r.residenceName=:name and r.blocks =:block")
     Residence getResidence(String name, String block);
+    @Query("select r from Residence r join fetch r.address  join fetch r.residenceRules rr left join fetch r.department d")
+    List<Residence> getAllResidences();
+
 }

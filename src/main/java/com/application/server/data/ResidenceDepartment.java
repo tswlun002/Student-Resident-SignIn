@@ -1,5 +1,6 @@
 package com.application.server.data;
 import com.application.student.data.Student;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.*;
 import org.hibernate.Hibernate;
 import javax.persistence.*;
@@ -25,10 +26,10 @@ public class ResidenceDepartment implements Serializable {
     }
     @Column(nullable = false)
     private String accommodation;
-
+    @JsonManagedReference
     @OneToMany(mappedBy = "department",fetch = FetchType.LAZY)
     private Set<Student> students = new HashSet<>();
-
+    @JsonManagedReference
     @OneToOne(mappedBy = "department",fetch = FetchType.LAZY)
     private Residence residence ;
 

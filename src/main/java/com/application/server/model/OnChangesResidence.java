@@ -10,5 +10,5 @@ public interface OnChangesResidence {
      * Notify when residence is a deleted
      * @param residence deleted  or to be deleted
      */
-    public void deletedResidence(Residence residence);
+    public boolean deletedResidence(Residence residence);
 }

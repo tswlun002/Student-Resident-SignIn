@@ -116,7 +116,7 @@ public  class ResidenceRegisterService {
      * @param room   assigned to student
      * @param studentId  being place in the room
      */
-    public void placeStudentToRoom(String name, String blocks, int floor, String flat, String room, long studentId) {
+    public boolean placeStudentToRoom(String name, String blocks, int floor, String flat, String room, long studentId) {
         ResidenceRegister register = getRegisterBy(blocks,floor,flat,room);
         ResidenceDepartment department =  getDepartment(name,blocks);
         Student student =  getStudent(department,studentId);
@@ -125,7 +125,8 @@ public  class ResidenceRegisterService {
             if(  !checkIfStudentIsAssignedOtherRoom(student)) {
                 if (register.getStudent() == null) {
                     try {
-                       saveStudent(register,student);
+                       return  saveStudent(register,student);
+
                     } catch (Exception e) {
                         throw new RuntimeException(e.getMessage());
                     }
@@ -142,9 +143,10 @@ public  class ResidenceRegisterService {
      * @param register is the residence register to student to
      * @param student to be saved to register
      */
-    private  void saveStudent(ResidenceRegister register,Student student){
+    private  boolean saveStudent(ResidenceRegister register,Student student){
         register.setStudent(student);
-        repository.save(register);
+        ResidenceRegister register1 = repository.save(register);
+        return register1!=null;
 
     }
 
@@ -293,13 +295,10 @@ public  class ResidenceRegisterService {
 
     /**
      * Remove student from residence register
-     * @param student to be removed from register
+     * @param register of student to be removed from register
      * @return true if student successfully removed else false
      */
-    public  boolean removeStudent(Student student){
-        if(student ==null)return  false;
-
-        ResidenceRegister register = getStudentRoom(student.getStudentNumber());
+    public  boolean removeStudent( ResidenceRegister register){
         if(register==null)return false;
         try {
             removeStudentCurrentRoom(register);
@@ -308,6 +307,21 @@ public  class ResidenceRegisterService {
         }
         return true;
     }
+
+    /**
+     * Remove student from residence register
+     * @param studentNumber  of the student to be removed from register
+     * @return true if student successfully removed else false
+     */
+    public  boolean removeStudent(long studentNumber){
+        ResidenceRegister register = getStudentRoom(studentNumber);
+        if(register==null)return  false;
+        return   removeStudent(register);
+    }
+
+
+
+
     /**
      * Remove student from the room
      * @param register record of the room here student is being removed from

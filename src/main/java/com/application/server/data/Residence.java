@@ -1,4 +1,6 @@
 package com.application.server.data;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 import org.hibernate.Hibernate;
 import javax.persistence.*;
@@ -11,16 +13,20 @@ import java.util.Objects;
 @Builder
 @Getter
 @Setter
-public class Residence implements Serializable {
+@ToString
+public class Residence  {
 
     @Id
     @Column(name = "id", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
-    @Column(name = "residenceName")
+    @Column(name = "residenceName", nullable = false)
     private String residenceName;
+    @NonNull
     private String blocks;
+    @NonNull
     private  int numberFloors ;
+    @NonNull
     private int numberFlats;
     private int numberRoom;
     private  int capacity;
@@ -32,7 +38,9 @@ public class Residence implements Serializable {
     @OneToOne(fetch = FetchType.LAZY,optional = false,orphanRemoval = true,cascade = {CascadeType.PERSIST})
     @JoinColumn(name = "residenceRules", referencedColumnName = "id")
     private ResidenceRules residenceRules;
-    @ManyToOne
+   @JsonBackReference
+    @ToString.Exclude
+    @OneToOne
     @JoinColumn(name="residence_departmentId",referencedColumnName = "id")
     private ResidenceDepartment department;
     @Override
@@ -40,8 +48,8 @@ public class Residence implements Serializable {
         if (this == o) return true;
         if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
         Residence residence = (Residence) o;
-        return residenceName != null && residenceName.equalsIgnoreCase(residence.residenceName)
-                && blocks != null && blocks.equalsIgnoreCase(residence.blocks);
+        return residenceName != null &&
+                residenceName.equalsIgnoreCase(residence.residenceName) && blocks.equalsIgnoreCase(residence.blocks);
     }
 
     @Override

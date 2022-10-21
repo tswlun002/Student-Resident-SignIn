@@ -63,13 +63,38 @@ public class ResidentDepartmentService implements OnStudentChanges,OnChangesResi
     }
 
     /**
+     * @param student to change residence
+     * @param currentResName of the current residence of the student
+     * @param currentBlock of the current residence of the student
+     * @param newAccommodation of the  residence where student will reside
+     * @return true student changed residence else false
+     */
+    @Override
+    public boolean studentChangeResidence(Student student, String currentResName, String currentBlock,
+                                          String newAccommodation) {
+
+        return changeStudentResidence(student,currentResName,currentBlock,newAccommodation);
+    }
+
+    /**
+     * Notify when residence is added
+     *
+     * @param residence added  or to be added
+     */
+    @Override
+    public void addedResidence(Residence residence) {
+        OnChangesResidence.super.addedResidence(residence);
+    }
+
+    /**
      * Notify when residence is a deleted
      *
      * @param residence deleted  or to be deleted
      */
     @Override
-    public void deletedResidence(Residence residence) {
-           if(residence !=null) removeResidence(residence);
+    public boolean deletedResidence(Residence residence) {
+           if(residence !=null) return removeResidence(residence);
+           return false;
     }
 
     /**
@@ -155,7 +180,6 @@ public class ResidentDepartmentService implements OnStudentChanges,OnChangesResi
             department.setResidence(null);
             repository.delete(department);
 
-
         });
     }
 
@@ -185,7 +209,7 @@ public class ResidentDepartmentService implements OnStudentChanges,OnChangesResi
      * @param department - housing/residence of student
      */
     private void  setDepartmentStudent(Set<Student> students, ResidenceDepartment department){
-        students.forEach(
+      students.forEach(
                 student -> {
                     student.setDepartment(department);
                     studentService.updateStudentDepartment(student);
@@ -244,6 +268,7 @@ public class ResidentDepartmentService implements OnStudentChanges,OnChangesResi
     public Residence getResidence(String name, String block){
         return  residenceService.getResidence(name.trim(), block.trim());
     }
+
 
     /**
      * Group students according to their residence/accommodation  status .
@@ -313,7 +338,7 @@ public class ResidentDepartmentService implements OnStudentChanges,OnChangesResi
      */
     public   Set<Student> getStudentsNotPlaced(){
         List<ResidenceDepartment> deptResidences = getDepartmentWithResidence();
-        return new HashSet<>(studentService.getStudentsWithResOffer()).stream().filter(
+        return new HashSet<>(studentService.getStudentsHaveResOffer()).stream().filter(
                 student -> !existsSchoolResidence(student, deptResidences)
         ).collect(Collectors.toSet());
     }
@@ -354,7 +379,6 @@ public class ResidentDepartmentService implements OnStudentChanges,OnChangesResi
 
           if(! residenceDepartment1.getStudents().contains(student))
           {
-              student.setDepartment(null);
               student.setAccommodation(nextResName);
               studentService.saveStudent(student);
               updated=true;

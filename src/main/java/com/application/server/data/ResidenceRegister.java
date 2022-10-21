@@ -17,7 +17,9 @@ public class ResidenceRegister {
     @Column(name = "id", nullable = false)
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
+    @NonNull
     private  int floor;
+    @NonNull
     private  String flat;
     private  String room;
     @ManyToOne(fetch = FetchType.LAZY)
