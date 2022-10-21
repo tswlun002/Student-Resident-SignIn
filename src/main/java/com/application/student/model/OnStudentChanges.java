@@ -10,4 +10,15 @@ public interface OnStudentChanges {
      * @param student  was deleted on students entity
      */
       void deletedStudent(Student student);
+
+    /**
+     * Changes student residence
+     * @param student  to change residence
+     * @param currentResName of the current residence student reside at
+     * @param currentBlock of the current residence student reside at
+     * @param newAccommodation new accommodation student to reside at
+     * @return true if student changes residence else false
+     */
+      boolean studentChangeResidence(Student student, String currentResName, String currentBlock,
+                                     String newAccommodation);
 }

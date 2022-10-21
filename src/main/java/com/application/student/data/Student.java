@@ -1,6 +1,7 @@
 package com.application.student.data;
 import com.application.server.data.Address;
 import com.application.server.data.ResidenceDepartment;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.*;
 import org.hibernate.Hibernate;
 import javax.persistence.*;
@@ -29,6 +30,8 @@ public class Student  implements Serializable {
     private String contact;
     @Column(name="accommodation", nullable = false)
     private  String accommodation;
+
+    @JsonBackReference
     @ToString.Exclude
     @ManyToOne
     @JoinColumn(name="residence_departmentId",referencedColumnName = "id")

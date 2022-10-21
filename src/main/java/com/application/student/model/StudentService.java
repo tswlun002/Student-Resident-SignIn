@@ -159,5 +159,19 @@ public class StudentService {
        return  null;
     }
 
+    /**
+     * Changes student residence
+     * @param studentId of the student to change residence
+     * @param currentResName of the current residence student reside at
+     * @param currentBlock of the current residence student reside at
+     * @param newAccommodation new accommodation student to reside at
+     * @return true if student changes residence else false
+     */
+    public boolean studentChangeResidence(long studentId, String currentResName, String currentBlock,
+                                                     String newAccommodation){
+        Student student = getStudent(studentId);
+        if(student==null)return  false;
+        return studentChanges.studentChangeResidence(student,currentResName,currentBlock,newAccommodation);
+    }
 
 }

@@ -1,5 +1,4 @@
 package com.application.student.controller;
-
 import com.application.server.data.Address;
 import com.application.student.data.Student;
 import com.application.student.model.StudentService;
@@ -61,12 +60,8 @@ public class StudentController {
      * @return student if the student is found else null
      */
     @GetMapping(value = "/students/student")
-    public String getStudent(@RequestParam long studentNumber) {
-        Student student= studentService.getStudent(studentNumber);
-        if(student !=null){
-            return  student.toString();
-        }
-        return "Student with student number:"+studentNumber+" is not found";
+    public Student getStudent(@RequestParam long studentNumber) {
+        return studentService.getStudent(studentNumber);
     }
 
     /**
@@ -75,10 +70,8 @@ public class StudentController {
      */
 
     @GetMapping(value = "students")
-    public List<String> getStudentList() {
-        return studentService.getStudentList().stream().map(
-                Student::toString
-        ).toList();
+    public List<Student> getStudentList() {
+        return studentService.getStudentList();
     }
 
     /**
@@ -86,10 +79,8 @@ public class StudentController {
      * @return  List of student have residence else null
      */
     @GetMapping(value ="/students/accommodation" )
-    public   List<String> studentsHasAccommodation(){
-      return  studentService.getStudentsHaveResOffer().stream().map(
-              Student::toString
-      ).toList();
+    public   List<Student> studentsHasAccommodation(){
+      return  studentService.getStudentsHaveResOffer();
 
     }
     /**
@@ -97,10 +88,8 @@ public class StudentController {
      * @return - list of students with  no accommodation
      */
     @GetMapping(value ="/students/no-accommodation" )
-    public List<String> getStudentsHaveNoResOffer() {
-        return studentService.getStudentsHaveNoResOffer().stream().map(
-                Student::toString
-        ).toList();
+    public List<Student> getStudentsHaveNoResOffer() {
+        return studentService.getStudentsHaveNoResOffer();
     }
     /**
      * Update student  name or contact of student
@@ -124,9 +113,24 @@ public class StudentController {
      */
     @DeleteMapping(value = "/delete")
     public boolean deleteStudent(@RequestParam long studentNumber) {
-        //.Logger.(getStudent(studentNumber));
        Student student = studentService.deleteStudent(studentNumber);
         return  student!=null;
+    }
+
+    /**
+     * Changes student residence
+     * @param studentId of the student to change residence
+     * @param currentResName of the current residence student reside at
+     * @param currentBlock of the current residence student reside at
+     * @param newAccommodation new accommodation student to reside at
+     * @return true if student changes residence else false
+     */
+    @PostMapping(value = "/students/change-residence")
+    public boolean studentChangeResidence(@RequestParam long studentId, @RequestParam String currentResName,
+                                          @RequestParam String currentBlock,
+                                          @RequestParam String newAccommodation){
+       return studentService.studentChangeResidence(studentId,currentResName,currentBlock,
+               newAccommodation);
     }
 
 
